@@ -159,22 +159,39 @@ function App() {
           </nav>
           <button
             onClick={toggleDarkMode}
-            className={`absolute -right-3 bottom-1/3 p-2 rounded-full ${
+            className={`absolute -left-1/5 bottom-4 p-2 rounded-full ${
               isDarkMode ? "bg-black text-white" : "bg-gray-200 text-black"
             }`}
             aria-label="Toggle dark mode"
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          <button
-            onClick={changeLanguage}
-            className={`absolute -right-3 top-1/2 p-2 rounded-full ${
-              isDarkMode ? "bg-black text-white" : "bg-gray-200 text-black"
-            }`}
-            aria-label="Change language"
-          >
-            <Globe size={20} />
-          </button>
+          {/* Bouton de sélection de la langue */}
+          {isNavOpen && (
+            <div className="absolute bottom-4 right-4">
+              <div className="relative inline-block">
+                <Globe
+                  size={24}
+                  className={`absolute left-3 top-2.5  ${
+                    isDarkMode ? "text-white" : "text-black"
+                  }`}
+                />
+                <select
+                  className={`pl-10 pr-4 py-2 border rounded-lg shadow-md ${
+                    isDarkMode
+                      ? "bg-black text-white"
+                      : "bg-gray-200 text-black"
+                  }`}
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value as Language)}
+                >
+                  <option value="fr">Français</option>
+                  <option value="en">English</option>
+                  <option value="ar">العربية</option>
+                </select>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
