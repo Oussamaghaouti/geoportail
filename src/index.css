@@ -19,3 +19,40 @@
 .leaflet-bottom {
   z-index: 0 !important;
 }
+/* Scrollbar pour le mode clair */
+.scrollbar-light::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-light::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Couleur de fond de la piste */
+  border-radius: 4px;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb {
+  background: #cbd5e0; /* Couleur de la barre de défilement */
+  border-radius: 4px;
+}
+
+.scrollbar-light::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0; /* Couleur au survol */
+}
+
+/* Scrollbar pour le mode sombre */
+.scrollbar-dark::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: #2d3748; /* Couleur de fond de la piste */
+  border-radius: 4px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background: #4a5568; /* Couleur de la barre de défilement */
+  border-radius: 4px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: #718096; /* Couleur au survol */
+}

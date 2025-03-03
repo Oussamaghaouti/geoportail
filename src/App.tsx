@@ -1,11 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Polygon, Popup } from "react-leaflet";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import Loading from "./loading"; // Importez votre composant de chargement
+import {
+  MapContainer,
+  TileLayer,
+  Polygon,
+  Polyline,
+  Popup,
+} from "react-leaflet";
 import {
   Menu,
   Map,
-  Settings,
-  Users,
-  MessageSquare,
   Home,
   ChevronLeft,
   ChevronRight,
@@ -14,66 +19,35 @@ import {
   Globe,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
-import { LatLngExpression } from "leaflet";
 import { translations, type Language } from "./translations";
+import { polygons, polylines } from "./data.tsx";
+const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
 
-// Sample polygons representing different zones
-const polygons: {
-  positions: LatLngExpression[][];
-  color: string;
-  name: string;
-  layer: string;
-}[] = [
-  {
-    positions: [
-      [
-        [48.8666, 2.3322],
-        [48.8666, 2.3422],
-        [48.8566, 2.3422],
-        [48.8566, 2.3322],
-      ],
-    ],
-    color: "#4F46E5",
-    name: "zoneResidentielleA",
-    layer: "couche1",
-  },
-  {
-    positions: [
-      [
-        [48.8566, 2.3622],
-        [48.8566, 2.3722],
-        [48.8466, 2.3722],
-        [48.8466, 2.3622],
-      ],
-    ],
-    color: "#10B981",
-    name: "zoneEcologique",
-    layer: "couche1",
-  },
-  {
-    positions: [
-      [
-        [48.8466, 2.3422],
-        [48.8466, 2.3522],
-        [48.8366, 2.3522],
-        [48.8366, 2.3422],
-      ],
-    ],
-    color: "#F59E0B",
-    name: "zoneMixte",
-    layer: "couche2",
-  },
-];
+  useEffect(() => {
+    // Simulez un temps de chargement minimum de 2 secondes
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 3000);
 
-function App() {
+    // Nettoyez le timer pour éviter des effets secondaires
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Si la page est en cours de chargement, affichez le composant Loading
+
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [currentPage, setCurrentPage] = useState("map"); // Gère l'affichage (map ou accueil)
   const [activeLayers, setActiveLayers] = useState({
-    couche1: true,
-    couche2: true,
+    commune: false,
+    province: false,
+    region: false,
+    routenationale: false,
+    routeprovinciale: false,
+    routeregionale: false,
   });
   const [language, setLanguage] = useState<Language>("fr");
-  const position: [number, number] = [48.8566, 2.3522]; // Paris coordinates
+  const position: [number, number] = [31.300779713704344, -4.78346132014275];
   const [isDarkMode, setIsDarkMode] = useState(false);
   useEffect(() => {
     if (isDarkMode) {
@@ -91,6 +65,42 @@ function App() {
       [layer]: !prevState[layer],
     }));
   };
+  const layers: {
+    color: string;
+    layer: string;
+    type: string;
+  }[] = [
+    {
+      color: "blue",
+      layer: "commune",
+      type: "polygone",
+    },
+    {
+      color: "red",
+      layer: "province",
+      type: "polygone",
+    },
+    {
+      color: "green",
+      layer: "region",
+      type: "polygone",
+    },
+    {
+      color: "#ffff00",
+      layer: "routenationale",
+      type: "polyline",
+    },
+    {
+      color: "#333333",
+      layer: "routeregionale",
+      type: "polyline",
+    },
+    {
+      color: "#FF6600",
+      layer: "routeprovinciale",
+      type: "polyline",
+    },
+  ];
   const changeLanguage = () => {
     setLanguage((prevLang) => {
       switch (prevLang) {
@@ -106,6 +116,13 @@ function App() {
     });
   };
   const t = translations[language];
+  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
+  const [isRoadExpanded, setIsRoadExpanded] = useState(true);
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  // Sinon, affichez la page principale
   return (
     <div
       className={`flex h-screen ${
@@ -149,13 +166,6 @@ function App() {
               isOpen={isNavOpen}
               onClick={() => setCurrentPage("map")}
             />
-            <NavItem icon={<Users />} text={t.users} isOpen={isNavOpen} />
-            <NavItem
-              icon={<MessageSquare />}
-              text={t.messages}
-              isOpen={isNavOpen}
-            />
-            <NavItem icon={<Settings />} text={t.settings} isOpen={isNavOpen} />
           </nav>
           <button
             onClick={toggleDarkMode}
@@ -227,7 +237,7 @@ function App() {
             <>
               <MapContainer
                 center={position}
-                zoom={13}
+                zoom={7}
                 style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer
@@ -255,13 +265,34 @@ function App() {
                     </Polygon>
                   ) : null
                 )}
+                {polylines.map((polyline, index) =>
+                  activeLayers[polyline.layer] ? (
+                    <Polyline
+                      key={index}
+                      positions={polyline.positions}
+                      pathOptions={{
+                        fillColor: polyline.color,
+                        fillOpacity: 0.3,
+                        weight: 2,
+                        color: polyline.color,
+                        opacity: 0.7,
+                      }}
+                    >
+                      <Popup>
+                        <div className="font-semibold">{polyline.name}</div>
+                      </Popup>
+                    </Polyline>
+                  ) : null
+                )}
               </MapContainer>
               {/* Légende */}
               <div
                 className={`absolute bottom-6 right-6 ${
-                  isDarkMode ? "bg-gray-900" : "bg-white"
+                  isDarkMode
+                    ? "bg-gray-900 scrollbar-dark"
+                    : "bg-white scrollbar-light"
                 }
- shadow-lg rounded-lg p-4 border border-gray-300`}
+ shadow-lg rounded-lg p-4 border border-gray-300 max-h-64 overflow-y-auto`}
               >
                 <h3
                   className={`font-bold ${
@@ -271,18 +302,37 @@ function App() {
                   {t.legend}
                 </h3>
                 <ul>
-                  {polygons.map((polygon, index) => (
+                  {layers.map((item, index) => (
                     <li key={index} className="flex items-center mb-2">
-                      <span
-                        className="w-4 h-4 inline-block rounded-full mr-2"
-                        style={{ backgroundColor: polygon.color }}
-                      ></span>
+                      {/* Forme conditionnelle */}
+                      {item.type === "polygone" && (
+                        <span
+                          className="w-4 h-4 inline-block mr-2"
+                          style={{ backgroundColor: item.color }}
+                        ></span>
+                      )}
+                      {item.type === "polyline" && (
+                        <div
+                          className="w-4 h-1 inline-block mr-2"
+                          style={{
+                            backgroundColor: item.color,
+                            transform: "translateY(50%)",
+                          }}
+                        ></div>
+                      )}
+                      {item.type === "point" && (
+                        <span
+                          className="w-4 h-4 rounded-full inline-block mr-2"
+                          style={{ backgroundColor: item.color }}
+                        ></span>
+                      )}
+
                       <span
                         className={`${
                           isDarkMode ? "text-white" : "text-black"
                         }`}
                       >
-                        {t[polygon.name]}
+                        {t[item.layer]}
                       </span>
                     </li>
                   ))}
@@ -292,8 +342,12 @@ function App() {
               <div
                 className={`absolute bottom-8 transition-all duration-300 ease-in-out ${
                   isNavOpen ? "left-72" : "left-24"
-                } w-56 ${isDarkMode ? "bg-gray-900" : "bg-white"}
- p-4 rounded-lg shadow-lg z-10`}
+                } w-56 ${
+                  isDarkMode
+                    ? "bg-gray-900 scrollbar-dark"
+                    : "bg-white scrollbar-light"
+                }
+ p-4 rounded-lg shadow-lg z-10 max-h-72 overflow-y-auto`}
               >
                 <h3
                   className={`font-bold ${
@@ -302,33 +356,192 @@ function App() {
                 >
                   {t.selectLayer}
                 </h3>
-                <div className="flex flex-col space-y-3">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={activeLayers.couche1}
-                      onChange={() => toggleLayer("couche1")}
-                      className="mr-2"
+                {/* Groupe Découpage Administratif */}
+                <div className="border rounded-lg p-2 mb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          activeLayers.region &&
+                          activeLayers.province &&
+                          activeLayers.commune
+                        }
+                        onChange={() => {
+                          const newState = !(
+                            activeLayers.region &&
+                            activeLayers.province &&
+                            activeLayers.commune
+                          );
+                          setActiveLayers({
+                            ...activeLayers,
+                            region: newState,
+                            province: newState,
+                            commune: newState,
+                          });
+                        }}
+                        className="mr-2"
+                      />
+                      <button
+                        onClick={() => setIsAdminExpanded(!isAdminExpanded)}
+                        className={`font-medium ${
+                          isDarkMode ? "text-white" : "text-black"
+                        }`}
+                      >
+                        {t.DA}
+                      </button>
+                    </div>
+                    <ChevronDownIcon
+                      onClick={() => setIsAdminExpanded(!isAdminExpanded)}
+                      className={`w-5 h-5 transform transition-transform ${
+                        isAdminExpanded ? "rotate-180" : ""
+                      }`}
                     />
-                    <label
-                      className={`${isDarkMode ? "text-white" : "text-black"}`}
-                    >
-                      {t.layer1}
-                    </label>
                   </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={activeLayers.couche2}
-                      onChange={() => toggleLayer("couche2")}
-                      className="mr-2"
+
+                  {isAdminExpanded && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.region}
+                          onChange={() => toggleLayer("region")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer1}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.province}
+                          onChange={() => toggleLayer("province")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer2}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.commune}
+                          onChange={() => toggleLayer("commune")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer3}
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Groupe Réseau Routier */}
+                <div className="border rounded-lg p-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          activeLayers.routenationale &&
+                          activeLayers.routeregionale &&
+                          activeLayers.routeprovinciale
+                        }
+                        onChange={() => {
+                          const newState = !(
+                            activeLayers.routenationale &&
+                            activeLayers.routeregionale &&
+                            activeLayers.routeprovinciale
+                          );
+                          setActiveLayers({
+                            ...activeLayers,
+                            routenationale: newState,
+                            routeregionale: newState,
+                            routeprovinciale: newState,
+                          });
+                        }}
+                        className="mr-2"
+                      />
+                      <button
+                        onClick={() => setIsRoadExpanded(!isRoadExpanded)}
+                        className={`font-medium ${
+                          isDarkMode ? "text-white" : "text-black"
+                        }`}
+                      >
+                        {t.RR}
+                      </button>
+                    </div>
+                    <ChevronDownIcon
+                      onClick={() => setIsRoadExpanded(!isRoadExpanded)}
+                      className={`w-5 h-5 transform transition-transform ${
+                        isRoadExpanded ? "rotate-180" : ""
+                      }`}
                     />
-                    <label
-                      className={`${isDarkMode ? "text-white" : "text-black"}`}
-                    >
-                      {t.layer2}
-                    </label>
                   </div>
+
+                  {isRoadExpanded && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.routenationale}
+                          onChange={() => toggleLayer("routenationale")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer4}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.routeregionale}
+                          onChange={() => toggleLayer("routeregionale")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer6}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.routeprovinciale}
+                          onChange={() => toggleLayer("routeprovinciale")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer5}
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </>
@@ -339,7 +552,7 @@ function App() {
       </div>
     </div>
   );
-}
+};
 
 interface NavItemProps {
   icon: React.ReactNode;
