@@ -116,8 +116,8 @@ const App = () => {
     });
   };
   const t = translations[language];
-  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
-  const [isRoadExpanded, setIsRoadExpanded] = useState(true);
+  const [isAdminExpanded, setIsAdminExpanded] = useState(false);
+  const [isRoadExpanded, setIsRoadExpanded] = useState(false);
   if (isLoading) {
     return <Loading />;
   }
