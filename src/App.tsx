@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import L from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 import { Maximize2, Minimize2 } from "lucide-react";
 import Loading from "./loading"; // Importez votre composant de chargement
 import {
@@ -34,6 +35,7 @@ import {
   Moon,
   Sun,
   Globe,
+  ArrowUp,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { translations, type Language } from "./translations";
@@ -71,7 +73,7 @@ const App = () => {
     cl_emp: false,
     creation: false,
   });
-  const [currentPage, setCurrentPage] = useState("map"); // Gère l'affichage (map ou accueil)
+  const [currentPage, setCurrentPage] = useState("accueil");
   const [activeLayers, setActiveLayers] = useState({
     commune: false,
     province: false,
@@ -627,7 +629,7 @@ const App = () => {
                 ? "bg-gradient-to-r from-gray-800 via-black to-gray-800"
                 : "bg-gradient-to-r from-white via-gray-200 to-white"
             } 
- shadow-lg p-6 rounded-b-2xl border-b-4 border-blue-700 flex items-center justify-center gap-3`}
+ shadow-lg p-6  border-b-4 border-blue-700 flex items-center justify-center gap-3`}
           >
             <Map
               size={32}
@@ -1566,7 +1568,73 @@ const App = () => {
               </div>
             </>
           ) : (
-            <h2 className="text-4xl font-bold text-blue-900">{t.hello}</h2>
+            <div
+              className={`relative flex flex-col items-center justify-center h-screen text-center ${
+                isDarkMode
+                  ? "bg-gradient-to-b from-blue-900 to-gray-900 text-white"
+                  : "bg-gradient-to-b from-gray-200 to-gray-500 text-black"
+              }`}
+            >
+              {/* Animation du titre */}
+              <motion.h1
+                initial={{ opacity: 0, y: -60 }}
+                animate={{ opacity: 1, y: -40 }}
+                transition={{ duration: 1 }}
+                className={` ${
+                  isDarkMode ? "text-blue-400" : "text-blue-700"
+                } text-5xl font-extrabold drop-shadow-md mb-6"`}
+              >
+                {t.title}
+              </motion.h1>
+              <motion.h2
+                initial={{ opacity: 0, y: -40 }}
+                animate={{ opacity: 1, y: -20 }}
+                transition={{ duration: 1 }}
+                className={` ${
+                  isDarkMode ? "text-blue-400" : "text-blue-700"
+                } text-4xl font-extrabold drop-shadow-md mb-6"`}
+              >
+                {t.title2}
+              </motion.h2>
+
+              {/* Description du site */}
+              <motion.p
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.3 }}
+                className={`text-lg ${
+                  isDarkMode ? "text-gray-300" : "text-gray-900"
+                } max-w-3xl mb-8`}
+              >
+                {t.desc}
+              </motion.p>
+
+              {/* Bouton pour aller à la carte */}
+              <motion.button
+                initial={{ opacity: 0, y: 0 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.3 }}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setCurrentPage("map")}
+                className={` ${
+                  isDarkMode
+                    ? "bg-blue-400 hover:bg-blue-500 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-black"
+                } font-semibold px-6 py-3 rounded-lg shadow-lg transition-all duration-300`}
+              >
+                {t.map2}
+              </motion.button>
+
+              {/* Pied de page */}
+              <footer
+                className={`absolute bottom-4 ${
+                  isDarkMode ? "text-gray-400" : "text-gray-900"
+                }  text-sm`}
+              >
+                {t.copy}{" "}
+              </footer>
+            </div>
           )}
         </div>
       </div>
