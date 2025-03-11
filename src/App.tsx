@@ -13,7 +13,7 @@ import {
   Calendar,
   Download,
 } from "lucide-react";
-import L from "leaflet";
+import L, { icon } from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { Maximize2, Minimize2 } from "lucide-react";
@@ -35,7 +35,7 @@ import {
   Moon,
   Sun,
   Globe,
-  ArrowUp,
+  Search,
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { translations, type Language } from "./translations";
@@ -92,6 +92,19 @@ const App = () => {
     iconAnchor: [16, 32],
     popupAnchor: [0, -32],
   });
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value.toLowerCase());
+  };
+
+  const matchesSearch = (name: string | undefined) => {
+    return searchTerm && name && name.toLowerCase().includes(searchTerm);
+  };
+
+  const getHighlightClass = (name: string | undefined) => {
+    return matchesSearch(name) ? "fill-yellow-800 stroke-yellow-800" : "";
+  };
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({
       ...prev,
@@ -649,6 +662,22 @@ const App = () => {
         <div className="flex-1">
           {currentPage === "map" ? (
             <>
+              <div className="absolute top-24 right-4 z-10">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    placeholder={t.recherche}
+                    className={`p-2 pl-10 pr-10 w-64 border rounded-md ${
+                      isDarkMode
+                        ? "bg-gray-900 text-white placeholder-gray-400 ring-2 ring-blue-400"
+                        : "text-gray-700 placeholder-gray-400 ring-2 ring-blue-700"
+                    }`}
+                  />
+                  <Search className="absolute left-2 top-2.5 w-5 h-5 text-gray-400" />
+                </div>
+              </div>
               <MapContainer
                 center={position}
                 zoom={7}
@@ -669,8 +698,10 @@ const App = () => {
                         click: () => handlePolygonClick(polygon),
                       }}
                       pathOptions={{
-                        fillColor: polygon.color,
-                        fillOpacity: 0.3,
+                        fillColor: matchesSearch(t[polygon.name])
+                          ? "darkgoldenrod"
+                          : polygon.color,
+                        fillOpacity: matchesSearch(t[polygon.name]) ? 1 : 0.3,
                         weight: 2,
                         color: polygon.color,
                         opacity: 0.7,
@@ -688,10 +719,14 @@ const App = () => {
                       key={index}
                       positions={polyline.positions}
                       pathOptions={{
-                        fillColor: polyline.color,
+                        fillColor: matchesSearch(t[polyline.name])
+                          ? "darkgoldenrod"
+                          : polyline.color,
                         fillOpacity: 0.3,
                         weight: 2,
-                        color: polyline.color,
+                        color: matchesSearch(t[polyline.layer])
+                          ? "darkgoldenrod"
+                          : polyline.color,
                         opacity: 0.7,
                       }}
                     >
@@ -706,7 +741,11 @@ const App = () => {
                     <Marker
                       key={index}
                       position={point.positions}
-                      icon={barrageIcon}
+                      icon={
+                        matchesSearch(t[points1.name])
+                          ? barrageIcon
+                          : barrageIcon
+                      }
                     >
                       <Popup>
                         <div className="font-semibold">
