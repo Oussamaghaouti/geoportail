@@ -13,6 +13,7 @@ import {
   Calendar,
   Download,
 } from "lucide-react";
+import L from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { Maximize2, Minimize2 } from "lucide-react";
 import Loading from "./loading"; // Importez votre composant de chargement
@@ -36,7 +37,7 @@ import {
 } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import { translations, type Language } from "./translations";
-import { polygons, polylines } from "./data.tsx";
+import { polygons, polylines, points1 } from "./data.tsx";
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPolygon, setSelectedPolygon] = useState<
@@ -78,6 +79,16 @@ const App = () => {
     routenationale: false,
     routeprovinciale: false,
     routeregionale: false,
+    barrage: false,
+    bassin: false,
+    oued: false,
+    nappe: false,
+  });
+  const barrageIcon = new L.Icon({
+    iconUrl: "https://static.thenounproject.com/png/265-512.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
   });
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => ({
@@ -292,6 +303,26 @@ const App = () => {
       layer: "routeprovinciale",
       type: "polyline",
     },
+    {
+      color: "yellow",
+      layer: "barrage",
+      type: "point",
+    },
+    {
+      color: "#0981D1",
+      layer: "bassin",
+      type: "polygone",
+    },
+    {
+      color: "#0F056B",
+      layer: "oued",
+      type: "polyline",
+    },
+    {
+      color: "#7F00FF",
+      layer: "nappe",
+      type: "polygone",
+    },
   ];
   const changeLanguage = () => {
     setLanguage((prevLang) => {
@@ -310,6 +341,7 @@ const App = () => {
   const t = translations[language];
   const [isAdminExpanded, setIsAdminExpanded] = useState(false);
   const [isRoadExpanded, setIsRoadExpanded] = useState(false);
+  const [isHydroExpanded, setIsHydroExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleExpand = () => {
     setIsExpanded((prev) => !prev);
@@ -662,12 +694,31 @@ const App = () => {
                       }}
                     >
                       <Popup>
-                        <div className="font-semibold">{polyline.name}</div>
+                        <div className="font-semibold">{t[polyline.layer]}</div>
                       </Popup>
                     </Polyline>
                   ) : null
                 )}
-                
+                {points1.map((point, index) =>
+                  activeLayers[point.layer] ? (
+                    <Marker
+                      key={index}
+                      position={point.positions}
+                      icon={barrageIcon}
+                    >
+                      <Popup>
+                        <div className="font-semibold">
+                          {t[point.name]} <br />
+                          {t.nomoed} {t[point.nom_oued]} <br />
+                          {t.Capacité} {point.capacite_i} {t.Mm3} <br />
+                          {t.Hauteur} {point.hauteur} {t.metre}
+                          <br />
+                          {t.Annéemise} {point.annee_mise}
+                        </div>{" "}
+                      </Popup>
+                    </Marker>
+                  ) : null
+                )}
               </MapContainer>
               <div
                 className={`absolute top-24 transition-all duration-300 ease-in-out ${
@@ -722,7 +773,7 @@ const App = () => {
                   </button>
                 )}
 
-                {!selectedPolygon ? (
+                {!selectedPolygon || selectedPolygon.layer !== "commune" ? (
                   <p
                     className={`italic ${
                       isDarkMode ? "text-gray-400" : "text-gray-600"
@@ -1176,10 +1227,13 @@ const App = () => {
                         ></div>
                       )}
                       {item.type === "point" && (
-                        <span
-                          className="w-4 h-4 rounded-full inline-block mr-2"
-                          style={{ backgroundColor: item.color }}
-                        ></span>
+                        <img
+                          src={
+                            "https://static.thenounproject.com/png/265-512.png"
+                          }
+                          alt="Point Icon"
+                          className="w-4 h-4 inline-block mr-2"
+                        />
                       )}
 
                       <span
@@ -1306,7 +1360,7 @@ const App = () => {
                 </div>
 
                 {/* Groupe Réseau Routier */}
-                <div className="border rounded-lg p-2">
+                <div className="border rounded-lg p-2 mb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
                       <input
@@ -1393,6 +1447,117 @@ const App = () => {
                           }`}
                         >
                           {t.layer5}
+                        </label>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* Groupe hydrographie */}
+                <div className="border rounded-lg p-2 mb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={
+                          activeLayers.barrage &&
+                          activeLayers.bassin &&
+                          activeLayers.oued &&
+                          activeLayers.nappe
+                        }
+                        onChange={() => {
+                          const newState = !(
+                            activeLayers.barrage &&
+                            activeLayers.bassin &&
+                            activeLayers.oued &&
+                            activeLayers.nappe
+                          );
+                          setActiveLayers({
+                            ...activeLayers,
+                            barrage: newState,
+                            bassin: newState,
+                            oued: newState,
+                            nappe: newState,
+                          });
+                        }}
+                        className="mr-2"
+                      />
+                      <button
+                        onClick={() => setIsHydroExpanded(!isHydroExpanded)}
+                        className={`font-medium ${
+                          isDarkMode ? "text-white" : "text-black"
+                        }`}
+                      >
+                        {t.HY}
+                      </button>
+                    </div>
+                    <ChevronDownIcon
+                      onClick={() => setIsHydroExpanded(!isHydroExpanded)}
+                      className={`w-5 h-5 transform transition-transform ${
+                        isHydroExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </div>
+
+                  {isHydroExpanded && (
+                    <div className="ml-4 mt-2 space-y-2">
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.barrage}
+                          onChange={() => toggleLayer("barrage")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer7}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.bassin}
+                          onChange={() => toggleLayer("bassin")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer8}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.oued}
+                          onChange={() => toggleLayer("oued")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer9}
+                        </label>
+                      </div>
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={activeLayers.nappe}
+                          onChange={() => toggleLayer("nappe")}
+                          className="mr-2"
+                        />
+                        <label
+                          className={`${
+                            isDarkMode ? "text-white" : "text-black"
+                          }`}
+                        >
+                          {t.layer10}
                         </label>
                       </div>
                     </div>
