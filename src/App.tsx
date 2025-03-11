@@ -253,7 +253,7 @@ const App = () => {
   };
   const [language, setLanguage] = useState<Language>("fr");
   const position: [number, number] = [31.300779713704344, -4.78346132014275];
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -1582,7 +1582,7 @@ const App = () => {
                 transition={{ duration: 1 }}
                 className={` ${
                   isDarkMode ? "text-blue-400" : "text-blue-700"
-                } text-5xl font-extrabold drop-shadow-md mb-6"`}
+                } text-4xl font-extrabold drop-shadow-md mb-6"`}
               >
                 {t.title}
               </motion.h1>
@@ -1592,7 +1592,7 @@ const App = () => {
                 transition={{ duration: 1 }}
                 className={` ${
                   isDarkMode ? "text-blue-400" : "text-blue-700"
-                } text-4xl font-extrabold drop-shadow-md mb-6"`}
+                } text-3xl font-extrabold drop-shadow-md mb-6"`}
               >
                 {t.title2}
               </motion.h2>
