@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import { Maximize2, Minimize2 } from "lucide-react";
 import Loading from "./loading"; // Importez votre composant de chargement
 import {
+  useMap,
   MapContainer,
   TileLayer,
   Polygon,
@@ -62,8 +63,8 @@ const App = () => {
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
-    demographie: false,
-    sante: false,
+    Demography: false,
+    Health: false,
     education: false,
     langues: false,
     emploi: false,
@@ -93,11 +94,43 @@ const App = () => {
     popupAnchor: [0, -32],
   });
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value.toLowerCase());
-  };
+    const value = e.target.value.toLowerCase();
+    setSearchTerm(value);
 
+    if (value.trim() === "") {
+      setSuggestions([]);
+      return;
+    }
+    const results = [...polygons, ...polylines]
+      .filter(
+        (item) => t[item.name] && t[item.name].toLowerCase().includes(value)
+      )
+      .slice(0, 3);
+
+    setSuggestions(results);
+  };
+  const [selectedFeature, setSelectedFeature] = useState(null);
+  const [shouldZoom, setShouldZoom] = useState(false);
+
+  const MapZoomHandler = ({ selectedFeature }) => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (shouldZoom && selectedFeature && selectedFeature.positions) {
+        map.flyToBounds(selectedFeature.positions, { padding: [50, 50] });
+        setShouldZoom(false);
+      }
+    }, [shouldZoom, selectedFeature, map, setShouldZoom]);
+
+    return null;
+  };
+  const zoomToFeature = (feature) => {
+    setSelectedFeature(feature);
+    setShouldZoom(true);
+  };
   const matchesSearch = (name: string | undefined) => {
     return searchTerm && name && name.toLowerCase().includes(searchTerm);
   };
@@ -126,8 +159,21 @@ const App = () => {
       setIsFullscreen(false);
     }
   };
+  const [showDownloadOptions, setShowDownloadOptions] = useState(false);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showDownloadOptions) {
+        setShowDownloadOptions(false);
+      }
+    };
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDownloadOptions]);
+
   const dataCategories = {
-    demographie: [
+    Demography: [
       "pop2024",
       "pop2024 M",
       "pop2024 F",
@@ -158,7 +204,7 @@ const App = () => {
       "Parite 45-",
       "ISF",
     ],
-    sante: ["%pre handi", "%pre han M", "%pre han F"],
+    Health: ["%pre handi", "%pre han M", "%pre han F"],
     education: [
       "%ana10",
       "%ana10_M",
@@ -266,7 +312,7 @@ const App = () => {
   };
   const [language, setLanguage] = useState<Language>("fr");
   const position: [number, number] = [31.300779713704344, -4.78346132014275];
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -380,7 +426,7 @@ const App = () => {
     doc.text(`${t.Demography}`, pageWidth / 2, 60, { align: "center" });
     let yOffset = 70;
     doc.setFontSize(12);
-    dataCategories.demographie.forEach((key) => {
+    dataCategories.Demography.forEach((key) => {
       doc.text(
         `${t[key as keyof typeof t]}: ${selectedPolygon[key]}`,
         pageWidth / 2,
@@ -399,7 +445,7 @@ const App = () => {
     doc.text(`${t.Health}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
     doc.setFontSize(12);
-    dataCategories.sante.forEach((key) => {
+    dataCategories.Health.forEach((key) => {
       doc.text(
         `${t[key as keyof typeof t]}: ${selectedPolygon[key]}`,
         pageWidth / 2,
@@ -438,6 +484,24 @@ const App = () => {
     yOffset += 20;
     doc.setFontSize(12);
     dataCategories.langues.forEach((key) => {
+      doc.text(
+        `${t[key as keyof typeof t]}: ${selectedPolygon[key]}`,
+        pageWidth / 2,
+        yOffset,
+        { align: "center" }
+      );
+      yOffset += 10;
+      if (yOffset > 270) {
+        doc.addPage();
+        yOffset = 20;
+      }
+    });
+    // Données de emploi
+    doc.setFontSize(16);
+    doc.text(`${t.emploi}`, pageWidth / 2, yOffset + 10, { align: "center" });
+    yOffset += 20;
+    doc.setFontSize(12);
+    dataCategories.emploi.forEach((key) => {
       doc.text(
         `${t[key as keyof typeof t]}: ${selectedPolygon[key]}`,
         pageWidth / 2,
@@ -545,11 +609,44 @@ const App = () => {
     // Sauvegarder le PDF
     doc.save(`rapport_recensement_${selectedPolygon.name}.pdf`);
   };
+  const generateCsvReport = (selectedPolygon: any, t: any) => {
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+
+    // En-têtes
+    const headers = [t.Categories, t.indices, t.valeurs];
+    csvContent += headers.join(",") + "\r\n";
+
+    // Données
+    Object.keys(dataCategories).forEach((category) => {
+      dataCategories[category].forEach((key) => {
+        const row = [
+          t[category],
+          t[key as keyof typeof t],
+          selectedPolygon[key],
+        ].join(",");
+        csvContent += row + "\r\n";
+      });
+    });
+
+    // Créer un lien de téléchargement
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute(
+      "download",
+      `rapport_recensement_${selectedPolygon.name}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isLoading) {
     return <Loading />;
   }
 
   // Sinon, affichez la page principale
+
   return (
     <div
       className={`flex h-screen ${
@@ -639,10 +736,10 @@ const App = () => {
           <div
             className={`${
               isDarkMode
-                ? "bg-gradient-to-r from-gray-800 via-black to-gray-800"
-                : "bg-gradient-to-r from-white via-gray-200 to-white"
+                ? "bg-gradient-to-r from-gray-800 via-black to-gray-800 border-blue-400"
+                : "bg-gradient-to-r from-white via-gray-200 to-white border-blue-700"
             } 
- shadow-lg p-6  border-b-4 border-blue-700 flex items-center justify-center gap-3`}
+ shadow-lg p-6  border-b-4  flex items-center justify-center gap-3`}
           >
             <Map
               size={32}
@@ -664,6 +761,7 @@ const App = () => {
             <>
               <div className="absolute top-24 right-4 z-10">
                 <div className="relative">
+                  {/* Champ de recherche */}
                   <input
                     type="text"
                     value={searchTerm}
@@ -676,8 +774,30 @@ const App = () => {
                     }`}
                   />
                   <Search className="absolute left-2 top-2.5 w-5 h-5 text-gray-400" />
+
+                  {/* Affichage des suggestions */}
+                  {suggestions.length > 0 && (
+                    <div
+                      className={`absolute top-full left-0 w-full ${
+                        isDarkMode ? "bg-gray-900" : "bg-white"
+                      } border rounded-md shadow-lg z-20`}
+                    >
+                      {suggestions.map((item) => (
+                        <div
+                          key={item.id}
+                          onClick={() => zoomToFeature(item)}
+                          className={`p-2 cursor-pointer hover:bg-blue-500 ${
+                            isDarkMode ? "hover:text-black" : "hover:text-white"
+                          } transition`}
+                        >
+                          {t[item.name]}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
+
               <MapContainer
                 center={position}
                 zoom={7}
@@ -686,6 +806,11 @@ const App = () => {
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <MapZoomHandler
+                  selectedFeature={selectedFeature}
+                  shouldZoom={shouldZoom}
+                  setShouldZoom={setShouldZoom}
                 />
 
                 {/* Render the polygons */}
@@ -801,17 +926,58 @@ const App = () => {
                 </h3>
                 {/* Bouton de téléchargement */}
                 {selectedPolygon && (
-                  <button
-                    onClick={() => generatePdfReport(selectedPolygon, t)}
-                    className={`absolute top-10 right-0 p-1 rounded-full ${
-                      isDarkMode
-                        ? "text-gray-300 hover:bg-gray-700"
-                        : "text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    <Download className="w-5 h-5 mr-2" />{" "}
-                    {/* Icône de téléchargement */}
-                  </button>
+                  <div className="absolute top-10 right-0">
+                    <div className="relative inline-block">
+                      <button
+                        onClick={() =>
+                          setShowDownloadOptions(!showDownloadOptions)
+                        }
+                        className={`p-1 rounded-full ${
+                          isDarkMode
+                            ? "text-gray-300 hover:bg-gray-700"
+                            : "text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        <Download className="w-5 h-5 mr-2" />
+                      </button>
+                      {showDownloadOptions && (
+                        <div
+                          className={`absolute right-0 z-20 mt-2 w-18 rounded-md shadow-lg ${
+                            isDarkMode ? "bg-gray-800" : "bg-gray-200"
+                          } ring-1 ring-black ring-opacity-5`}
+                        >
+                          <div className="py-1">
+                            <button
+                              onClick={() => {
+                                generatePdfReport(selectedPolygon, t);
+                                setShowDownloadOptions(false);
+                              }}
+                              className={`block w-full px-4 py-2 text-sm ${
+                                isDarkMode
+                                  ? "text-white hover:bg-gray-700"
+                                  : "text-gray-900 hover:bg-gray-300"
+                              }`}
+                            >
+                              PDF
+                            </button>
+                            <button
+                              onClick={() => {
+                                generateCsvReport(selectedPolygon, t);
+                                setShowDownloadOptions(false);
+                              }}
+                              className={`block w-full px-4 py-2 text-sm ${
+                                isDarkMode
+                                  ? "text-white hover:bg-gray-700"
+                                  : "text-gray-900 hover:bg-gray-300"
+                              }`}
+                            >
+                              CSV
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
 
                 {!selectedPolygon || selectedPolygon.layer !== "commune" ? (
@@ -828,10 +994,14 @@ const App = () => {
                       {t[selectedPolygon.name]}
                     </h4>
                     {/* Section Démographie */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("demographie")}
+                        onClick={() => toggleSection("Demography")}
                       >
                         <div className="flex items-center">
                           <Users className="w-5 h-5 mr-2" />{" "}
@@ -840,24 +1010,34 @@ const App = () => {
                         </div>
                         <ChevronDownIcon
                           className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.demographie ? "rotate-180" : ""
+                            expandedSections.Demography ? "rotate-180" : ""
                           }`}
                         />
                       </div>
 
-                      {expandedSections.demographie && (
+                      {expandedSections.Demography && (
                         <ul className="mt-2 space-y-2">
-                          {dataCategories.demographie.map((key) => (
+                          {dataCategories.Demography.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -869,10 +1049,14 @@ const App = () => {
                     </div>
 
                     {/* Section Santé */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("sante")}
+                        onClick={() => toggleSection("Health")}
                       >
                         <div className="flex items-center">
                           <HeartPulse className="w-5 h-5 mr-2" />{" "}
@@ -881,24 +1065,34 @@ const App = () => {
                         </div>
                         <ChevronDownIcon
                           className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.sante ? "rotate-180" : ""
+                            expandedSections.Health ? "rotate-180" : ""
                           }`}
                         />
                       </div>
 
-                      {expandedSections.sante && (
+                      {expandedSections.Health && (
                         <ul className="mt-2 space-y-2">
-                          {dataCategories.sante.map((key) => (
+                          {dataCategories.Health.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -910,7 +1104,11 @@ const App = () => {
                     </div>
 
                     {/* Section Éducation */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("education")}
@@ -932,14 +1130,24 @@ const App = () => {
                           {dataCategories.education.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -950,7 +1158,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section langues */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("langues")}
@@ -972,14 +1184,24 @@ const App = () => {
                           {dataCategories.langues.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -990,7 +1212,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section emploi */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("emploi")}
@@ -1012,14 +1238,24 @@ const App = () => {
                           {dataCategories.emploi.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1030,7 +1266,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section menages */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("menages")}
@@ -1052,14 +1292,24 @@ const App = () => {
                           {dataCategories.menages.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1070,7 +1320,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section economie */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("economie")}
@@ -1092,14 +1346,24 @@ const App = () => {
                           {dataCategories.economie.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1110,7 +1374,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section secac */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("secac")}
@@ -1132,14 +1400,24 @@ const App = () => {
                           {dataCategories.secac.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1150,7 +1428,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section cl_emp */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("cl_emp")}
@@ -1172,14 +1454,24 @@ const App = () => {
                           {dataCategories.cl_emp.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1190,7 +1482,11 @@ const App = () => {
                       )}
                     </div>
                     {/* Section creation */}
-                    <div className="border rounded-lg p-2 mb-3">
+                    <div
+                      className={`border rounded-lg p-2 mb-3 ${
+                        language === "ar" ? "text-right flex-1" : "text-left"
+                      }`}
+                    >
                       <div
                         className="flex items-center justify-between cursor-pointer"
                         onClick={() => toggleSection("creation")}
@@ -1212,14 +1508,24 @@ const App = () => {
                           {dataCategories.creation.map((key) => (
                             <li
                               key={key}
-                              className={`flex justify-between ${
+                              className={`flex ${
+                                language === "ar"
+                                  ? "flex-row-reverse"
+                                  : "justify-between"
+                              } ${
                                 isDarkMode ? "text-gray-300" : "text-gray-700"
                               }`}
                             >
                               <span className="font-medium">
-                                {t[key as keyof typeof t]}:
+                                {t[key as keyof typeof t]}
                               </span>
-                              <span className="ml-4">
+                              <span
+                                className={`${
+                                  language === "ar"
+                                    ? "text-left flex-1"
+                                    : "ml-4"
+                                } `}
+                              >
                                 {typeof selectedPolygon[key] === "number"
                                   ? selectedPolygon[key].toLocaleString()
                                   : selectedPolygon[key]}
@@ -1611,7 +1917,7 @@ const App = () => {
               className={`relative flex flex-col items-center justify-center h-screen text-center ${
                 isDarkMode
                   ? "bg-gradient-to-b from-blue-900 to-gray-900 text-white"
-                  : "bg-gradient-to-b from-gray-200 to-gray-500 text-black"
+                  : "bg-gradient-to-b from-blue-300 to-gray-300 text-black"
               }`}
             >
               {/* Animation du titre */}

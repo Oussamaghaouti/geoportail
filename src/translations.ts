@@ -199,6 +199,11 @@ Sud:"Sud",
     cl_emp:"Classes d'emploi des établissements économiques à but lucratif",
     creation:"Date de création des établissements économiques à but lucratif",
 
+    Categories:"Catégories",
+    indices:"Indices",
+    valeurs:"Valeurs",
+
+
 "DRAA-TAFILALET":"Draa-Tafilalet",
 "ERRACHIDIA":"Errachidia",
 "MIDELT":"Midelt",
@@ -569,6 +574,10 @@ secac:"Business Sector of Profit-Oriented Economic Establishments",
 cl_emp:"Employment Classes of Profit-Oriented Economic Establishments",
 creation:"Creation Date of Profit-Oriented Economic Establishments",
 
+Categories:"Categories",
+indices:"Indicators",
+valeurs:"Values",
+
 "DRAA-TAFILALET":"Draa-Tafilalet",
 "ERRACHIDIA":"Errachidia",
 "MIDELT":"Midelt",
@@ -934,6 +943,11 @@ economie:"المؤسسات الاقتصادية حسب النوع",
 secac:"قطاع النشاط للمؤسسات الاقتصادية ذات الربح",
 cl_emp:"فئات العمل للمؤسسات الاقتصادية ذات الربح",
 creation:"تاريخ إنشاء المؤسسات الاقتصادية ذات الربح",
+
+Categories:"فئات",
+indices:"مؤشر",
+valeurs:"قيم",
+
 
 "DRAA-TAFILALET":"درعة تافيلالت",
 "ERRACHIDIA":"الرشيدية",
