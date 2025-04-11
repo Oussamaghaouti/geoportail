@@ -1672,7 +1672,7 @@ const App = () => {
                       <button
                         onClick={() => setLegendVisible(false)}
                         className={`absolute top-3 right-3 
-        p-1 rounded-full hover:bg-opacity-20 ${
+        p-1 rounded-full  ${
           isDarkMode
             ? "text-gray-300 hover:bg-gray-700"
             : "text-gray-700 hover:bg-gray-200"
@@ -1782,7 +1782,7 @@ const App = () => {
                       <button
                         onClick={() => setLayersVisible(false)}
                         className={`absolute top-3 right-3 
-        p-1 rounded-full hover:bg-opacity-20 ${
+        p-1 rounded-full ${
           isDarkMode
             ? "text-gray-300 hover:bg-gray-700"
             : "text-gray-700 hover:bg-gray-200"
@@ -2117,9 +2117,7 @@ const App = () => {
                               key={key}
                               onClick={() => setBaseMap(key)}
                               className={`w-full text-left px-3 py-1 rounded-md ${
-                                index === 0
-                                  ? "mt-2 "
-                                  : "" /* marge seulement pour le premier élément */
+                                index === 0 ? "mt-2 " : ""
                               }${
                                 baseMap === key
                                   ? isDarkMode
