@@ -15,7 +15,7 @@ import {
   X,
   Layers,
   BookText,
-  Compass,
+  ListOrdered,
 } from "lucide-react";
 import L, { icon } from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -347,7 +347,7 @@ const App = () => {
   const [legendVisible, setLegendVisible] = useState(false);
   const [layersVisible, setLayersVisible] = useState(false);
   const [activePanel, setActivePanel] = useState<"layers" | "baseMap">(
-    "layers"
+    "baseMap"
   );
 
   useEffect(() => {
@@ -930,21 +930,21 @@ const App = () => {
                   isExpanded
                     ? "top-24 w-96 h-[80vh] z-20"
                     : dataWindowVisible
-                    ? "top-24 w-72 max-h-56"
-                    : "top-24 w-20 max-h-56"
+                    ? "top-24 w-72 max-h-56 p-4"
+                    : "top-24 w-14 max-h-56 p-[8px]"
                 } ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
                 }
-                 p-4 rounded-lg shadow-lg z-10 overflow-y-auto`}
+                rounded-lg shadow-lg z-10 overflow-y-auto`}
               >
                 {dataWindowVisible ? (
                   <div>
                     {/* Bouton pour agrandir/réduire */}
                     <button
                       onClick={toggleExpand}
-                      className={`absolute top-2 right-2 p-1 rounded-full ${
+                      className={`absolute top-10 right-2 p-1 rounded-full ${
                         isDarkMode
                           ? "text-gray-300 hover:bg-gray-700"
                           : "text-gray-700 hover:bg-gray-200"
@@ -973,7 +973,7 @@ const App = () => {
                         setDataWindowVisible(false);
                         setIsExpanded(false);
                       }}
-                      className={`absolute top-10 right-2
+                      className={`absolute top-2 right-2
         p-1 rounded-full ${
           isDarkMode
             ? "text-gray-300 hover:bg-gray-700"
@@ -1657,6 +1657,7 @@ const App = () => {
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
                 }
+                ${legendVisible ? "p-4" : "p-[8px]"}
  shadow-lg rounded-lg p-4 border border-gray-300 max-h-64 overflow-y-auto`}
               >
                 {legendVisible ? (
@@ -1731,7 +1732,7 @@ const App = () => {
                     } transition-all duration-300 flex items-center`}
                     aria-label="Afficher la légende"
                   >
-                    <Compass className="w-5 h-5" />
+                    <ListOrdered className="w-5 h-5" />
                   </button>
                 )}
               </div>
@@ -1739,12 +1740,14 @@ const App = () => {
               <div
                 className={`absolute bottom-8 transition-all duration-300 ease-in-out ${
                   isNavOpen ? "left-72" : "left-24"
-                } ${layersVisible ? "w-56 " : "w-20"} ${
+                } ${
+                  layersVisible ? "w-56 p-4 rounded-lg" : "w-24 p-2 rounded-lg"
+                } ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
                 }
- p-4 rounded-lg shadow-lg z-10 max-h-56 overflow-y-auto`}
+ shadow-lg z-10 max-h-56 overflow-y-auto`}
               >
                 {layersVisible ? (
                   <div>
@@ -2136,21 +2139,36 @@ const App = () => {
                     </div>
                   </div>
                 ) : (
-                  <button
-                    onClick={() => setLayersVisible(true)}
-                    className={`p-2 rounded-lg ${
-                      isDarkMode
-                        ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
-                        : "bg-gray-200 hover:bg-gray-300 text-blue-700"
-                    } transition-all duration-300 flex items-center`}
-                    aria-label="Afficher les contrôles des couches"
-                  >
-                    {activePanel === "layers" ? (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setLayersVisible(true);
+                        setActivePanel("layers");
+                      }}
+                      className={`p-2 rounded-lg ${
+                        isDarkMode
+                          ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                          : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                      } transition-all duration-300 flex items-center`}
+                      aria-label="Afficher les contrôles des couches"
+                    >
                       <Layers className="w-5 h-5" />
-                    ) : (
+                    </button>
+                    <button
+                      onClick={() => {
+                        setLayersVisible(true);
+                        setActivePanel("baseMap");
+                      }}
+                      className={`p-2 rounded-lg ${
+                        isDarkMode
+                          ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                          : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                      } transition-all duration-300 flex items-center`}
+                      aria-label="Afficher les contrôles des couches"
+                    >
                       <Map className="w-5 h-5" />
-                    )}
-                  </button>
+                    </button>
+                  </div>
                 )}
               </div>
             </>
