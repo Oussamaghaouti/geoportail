@@ -12,6 +12,10 @@ import {
   TrendingUp,
   Calendar,
   Download,
+  X,
+  Layers,
+  BookText,
+  Compass,
 } from "lucide-react";
 import L, { icon } from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
@@ -95,6 +99,32 @@ const App = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [baseMap, setBaseMap] = useState<string>("osm"); // État pour la carte active
+  const baseMaps = {
+    osm: {
+      name: "OpenStreetMap",
+      url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    },
+    satellite: {
+      name: "Satellite",
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      attribution: "Tiles &copy; Esri",
+    },
+    topo: {
+      name: "Topographique",
+      url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+      attribution:
+        'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    },
+    dark: {
+      name: "Mode Nuit",
+      url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    },
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
@@ -313,6 +343,13 @@ const App = () => {
   const [language, setLanguage] = useState<Language>("fr");
   const position: [number, number] = [31.300779713704344, -4.78346132014275];
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [dataWindowVisible, setDataWindowVisible] = useState(false);
+  const [legendVisible, setLegendVisible] = useState(false);
+  const [layersVisible, setLayersVisible] = useState(false);
+  const [activePanel, setActivePanel] = useState<"layers" | "baseMap">(
+    "layers"
+  );
+
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add("dark");
@@ -804,8 +841,8 @@ const App = () => {
                 style={{ height: "100%", width: "100%" }}
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url={baseMaps[baseMap].url}
+                  attribution={baseMaps[baseMap].attribution}
                 />
                 <MapZoomHandler
                   selectedFeature={selectedFeature}
@@ -892,650 +929,725 @@ const App = () => {
                 } ${
                   isExpanded
                     ? "top-24 w-96 h-[80vh] z-20"
-                    : "top-24 w-72 max-h-56"
+                    : dataWindowVisible
+                    ? "top-24 w-72 max-h-56"
+                    : "top-24 w-20 max-h-56"
                 } ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
-                } p-4 rounded-lg shadow-lg z-10 overflow-y-auto`}
+                }
+                 p-4 rounded-lg shadow-lg z-10 overflow-y-auto`}
               >
-                {/* Bouton pour agrandir/réduire */}
-                <button
-                  onClick={toggleExpand}
-                  className={`absolute top-2 right-2 p-1 rounded-full ${
-                    isDarkMode
-                      ? "text-gray-300 hover:bg-gray-700"
-                      : "text-gray-700 hover:bg-gray-200"
-                  }`}
-                  aria-label={
-                    isExpanded ? "Agrandir la fenêtre" : "Réduire la fenêtre"
-                  }
-                >
-                  {isExpanded ? (
-                    <Minimize2 className="w-5 h-5" />
-                  ) : (
-                    <Maximize2 className="w-5 h-5" />
-                  )}
-                </button>
-                <h3
-                  className={`text-lg font-bold mb-4 ${
-                    isDarkMode ? "text-blue-300" : "text-blue-700"
-                  }`}
-                >
-                  {t.recens}
-                </h3>
-                {/* Bouton de téléchargement */}
-                {selectedPolygon && (
-                  <div className="absolute top-10 right-0">
-                    <div className="relative inline-block">
-                      <button
-                        onClick={() =>
-                          setShowDownloadOptions(!showDownloadOptions)
-                        }
-                        className={`p-1 rounded-full ${
-                          isDarkMode
-                            ? "text-gray-300 hover:bg-gray-700"
-                            : "text-gray-700 hover:bg-gray-200"
+                {dataWindowVisible ? (
+                  <div>
+                    {/* Bouton pour agrandir/réduire */}
+                    <button
+                      onClick={toggleExpand}
+                      className={`absolute top-2 right-2 p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                      aria-label={
+                        isExpanded
+                          ? "Agrandir la fenêtre"
+                          : "Réduire la fenêtre"
+                      }
+                    >
+                      {isExpanded ? (
+                        <Minimize2 className="w-5 h-5" />
+                      ) : (
+                        <Maximize2 className="w-5 h-5" />
+                      )}
+                    </button>
+                    <h3
+                      className={`text-lg font-bold mb-4 ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {t.recens}
+                    </h3>
+                    <button
+                      onClick={() => {
+                        setDataWindowVisible(false);
+                        setIsExpanded(false);
+                      }}
+                      className={`absolute top-10 right-2
+        p-1 rounded-full ${
+          isDarkMode
+            ? "text-gray-300 hover:bg-gray-700"
+            : "text-gray-700 hover:bg-gray-200"
+        }`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    {/* Bouton de téléchargement */}
+                    {selectedPolygon && (
+                      <div className="absolute top-[70px] right-0">
+                        <div className="relative inline-block">
+                          <button
+                            onClick={() =>
+                              setShowDownloadOptions(!showDownloadOptions)
+                            }
+                            className={`p-1 rounded-full ${
+                              isDarkMode
+                                ? "text-gray-300 hover:bg-gray-700"
+                                : "text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            <Download className="w-5 h-5 mr-2" />
+                          </button>
+                          {showDownloadOptions && (
+                            <div
+                              className={`absolute right-0 z-20 mt-2 w-18 rounded-md shadow-lg ${
+                                isDarkMode ? "bg-gray-800" : "bg-gray-200"
+                              } ring-1 ring-black ring-opacity-5`}
+                            >
+                              <div className="py-1">
+                                <button
+                                  onClick={() => {
+                                    generatePdfReport(selectedPolygon, t);
+                                    setShowDownloadOptions(false);
+                                  }}
+                                  className={`block w-full px-4 py-2 text-sm ${
+                                    isDarkMode
+                                      ? "text-white hover:bg-gray-700"
+                                      : "text-gray-900 hover:bg-gray-300"
+                                  }`}
+                                >
+                                  PDF
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    generateCsvReport(selectedPolygon, t);
+                                    setShowDownloadOptions(false);
+                                  }}
+                                  className={`block w-full px-4 py-2 text-sm ${
+                                    isDarkMode
+                                      ? "text-white hover:bg-gray-700"
+                                      : "text-gray-900 hover:bg-gray-300"
+                                  }`}
+                                >
+                                  CSV
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {!selectedPolygon || selectedPolygon.layer !== "commune" ? (
+                      <p
+                        className={`italic ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
-                        <Download className="w-5 h-5 mr-2" />
-                      </button>
-                      {showDownloadOptions && (
+                        {t.promp}
+                      </p>
+                    ) : (
+                      <>
+                        <h4 className="font-semibold text-lg mb-2">
+                          {t[selectedPolygon.name]}
+                        </h4>
+                        {/* Section Démographie */}
                         <div
-                          className={`absolute right-0 z-20 mt-2 w-18 rounded-md shadow-lg ${
-                            isDarkMode ? "bg-gray-800" : "bg-gray-200"
-                          } ring-1 ring-black ring-opacity-5`}
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
                         >
-                          <div className="py-1">
-                            <button
-                              onClick={() => {
-                                generatePdfReport(selectedPolygon, t);
-                                setShowDownloadOptions(false);
-                              }}
-                              className={`block w-full px-4 py-2 text-sm ${
-                                isDarkMode
-                                  ? "text-white hover:bg-gray-700"
-                                  : "text-gray-900 hover:bg-gray-300"
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("Demography")}
+                          >
+                            <div className="flex items-center">
+                              <Users className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour Démographie */}
+                              <h5 className="font-medium">{t.Demography}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.Demography ? "rotate-180" : ""
                               }`}
-                            >
-                              PDF
-                            </button>
-                            <button
-                              onClick={() => {
-                                generateCsvReport(selectedPolygon, t);
-                                setShowDownloadOptions(false);
-                              }}
-                              className={`block w-full px-4 py-2 text-sm ${
-                                isDarkMode
-                                  ? "text-white hover:bg-gray-700"
-                                  : "text-gray-900 hover:bg-gray-300"
-                              }`}
-                            >
-                              CSV
-                            </button>
+                            />
                           </div>
+
+                          {expandedSections.Demography && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.Demography.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
-                      )}
-                    </div>
+
+                        {/* Section Santé */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("Health")}
+                          >
+                            <div className="flex items-center">
+                              <HeartPulse className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour Santé */}
+                              <h5 className="font-medium">{t.Health}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.Health ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.Health && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.Health.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+
+                        {/* Section Éducation */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("education")}
+                          >
+                            <div className="flex items-center">
+                              <BookOpen className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour education */}
+                              <h5 className="font-medium">{t.education}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.education ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.education && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.education.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section langues */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("langues")}
+                          >
+                            <div className="flex items-center">
+                              <Languages className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour langues */}
+                              <h5 className="font-medium">{t.langues}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.langues ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.langues && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.langues.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section emploi */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("emploi")}
+                          >
+                            <div className="flex items-center">
+                              <DollarSign className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour emploi */}
+                              <h5 className="font-medium">{t.emploi}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.emploi ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.emploi && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.emploi.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section menages */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("menages")}
+                          >
+                            <div className="flex items-center">
+                              <Home className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour meanges */}
+                              <h5 className="font-medium">{t.menages}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.menages ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.menages && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.menages.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section economie */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("economie")}
+                          >
+                            <div className="flex items-center">
+                              <Building className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour economie */}
+                              <h5 className="font-medium">{t.economie}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.economie ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.economie && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.economie.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section secac */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("secac")}
+                          >
+                            <div className="flex items-center">
+                              <PieChart className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour secac */}
+                              <h5 className="font-medium">{t.secac}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.secac ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.secac && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.secac.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section cl_emp */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("cl_emp")}
+                          >
+                            <div className="flex items-center">
+                              <TrendingUp className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour cl_emp */}
+                              <h5 className="font-medium">{t.cl_emp}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.cl_emp ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.cl_emp && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.cl_emp.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        {/* Section creation */}
+                        <div
+                          className={`border rounded-lg p-2 mb-3 ${
+                            language === "ar"
+                              ? "text-right flex-1"
+                              : "text-left"
+                          }`}
+                        >
+                          <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleSection("creation")}
+                          >
+                            <div className="flex items-center">
+                              <Calendar className="w-5 h-5 mr-2" />{" "}
+                              {/* Icône pour creation */}
+                              <h5 className="font-medium">{t.creation}</h5>
+                            </div>
+                            <ChevronDownIcon
+                              className={`w-5 h-5 transform transition-transform ${
+                                expandedSections.creation ? "rotate-180" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {expandedSections.creation && (
+                            <ul className="mt-2 space-y-2">
+                              {dataCategories.creation.map((key) => (
+                                <li
+                                  key={key}
+                                  className={`flex ${
+                                    language === "ar"
+                                      ? "flex-row-reverse"
+                                      : "justify-between"
+                                  } ${
+                                    isDarkMode
+                                      ? "text-gray-300"
+                                      : "text-gray-700"
+                                  }`}
+                                >
+                                  <span className="font-medium">
+                                    {t[key as keyof typeof t]}
+                                  </span>
+                                  <span
+                                    className={`${
+                                      language === "ar"
+                                        ? "text-left flex-1"
+                                        : "ml-4"
+                                    } `}
+                                  >
+                                    {typeof selectedPolygon[key] === "number"
+                                      ? selectedPolygon[key].toLocaleString()
+                                      : selectedPolygon[key]}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
-
-                {!selectedPolygon || selectedPolygon.layer !== "commune" ? (
-                  <p
-                    className={`italic ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    {t.promp}
-                  </p>
                 ) : (
-                  <>
-                    <h4 className="font-semibold text-lg mb-2">
-                      {t[selectedPolygon.name]}
-                    </h4>
-                    {/* Section Démographie */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("Demography")}
-                      >
-                        <div className="flex items-center">
-                          <Users className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour Démographie */}
-                          <h5 className="font-medium">{t.Demography}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.Demography ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.Demography && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.Demography.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-
-                    {/* Section Santé */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("Health")}
-                      >
-                        <div className="flex items-center">
-                          <HeartPulse className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour Santé */}
-                          <h5 className="font-medium">{t.Health}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.Health ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.Health && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.Health.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-
-                    {/* Section Éducation */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("education")}
-                      >
-                        <div className="flex items-center">
-                          <BookOpen className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour education */}
-                          <h5 className="font-medium">{t.education}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.education ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.education && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.education.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section langues */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("langues")}
-                      >
-                        <div className="flex items-center">
-                          <Languages className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour langues */}
-                          <h5 className="font-medium">{t.langues}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.langues ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.langues && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.langues.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section emploi */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("emploi")}
-                      >
-                        <div className="flex items-center">
-                          <DollarSign className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour emploi */}
-                          <h5 className="font-medium">{t.emploi}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.emploi ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.emploi && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.emploi.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section menages */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("menages")}
-                      >
-                        <div className="flex items-center">
-                          <Home className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour meanges */}
-                          <h5 className="font-medium">{t.menages}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.menages ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.menages && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.menages.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section economie */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("economie")}
-                      >
-                        <div className="flex items-center">
-                          <Building className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour economie */}
-                          <h5 className="font-medium">{t.economie}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.economie ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.economie && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.economie.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section secac */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("secac")}
-                      >
-                        <div className="flex items-center">
-                          <PieChart className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour secac */}
-                          <h5 className="font-medium">{t.secac}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.secac ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.secac && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.secac.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section cl_emp */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("cl_emp")}
-                      >
-                        <div className="flex items-center">
-                          <TrendingUp className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour cl_emp */}
-                          <h5 className="font-medium">{t.cl_emp}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.cl_emp ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.cl_emp && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.cl_emp.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                    {/* Section creation */}
-                    <div
-                      className={`border rounded-lg p-2 mb-3 ${
-                        language === "ar" ? "text-right flex-1" : "text-left"
-                      }`}
-                    >
-                      <div
-                        className="flex items-center justify-between cursor-pointer"
-                        onClick={() => toggleSection("creation")}
-                      >
-                        <div className="flex items-center">
-                          <Calendar className="w-5 h-5 mr-2" />{" "}
-                          {/* Icône pour creation */}
-                          <h5 className="font-medium">{t.creation}</h5>
-                        </div>
-                        <ChevronDownIcon
-                          className={`w-5 h-5 transform transition-transform ${
-                            expandedSections.creation ? "rotate-180" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {expandedSections.creation && (
-                        <ul className="mt-2 space-y-2">
-                          {dataCategories.creation.map((key) => (
-                            <li
-                              key={key}
-                              className={`flex ${
-                                language === "ar"
-                                  ? "flex-row-reverse"
-                                  : "justify-between"
-                              } ${
-                                isDarkMode ? "text-gray-300" : "text-gray-700"
-                              }`}
-                            >
-                              <span className="font-medium">
-                                {t[key as keyof typeof t]}
-                              </span>
-                              <span
-                                className={`${
-                                  language === "ar"
-                                    ? "text-left flex-1"
-                                    : "ml-4"
-                                } `}
-                              >
-                                {typeof selectedPolygon[key] === "number"
-                                  ? selectedPolygon[key].toLocaleString()
-                                  : selectedPolygon[key]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </>
+                  <button
+                    onClick={() => setDataWindowVisible(true)}
+                    className={`p-2 rounded-lg ${
+                      isDarkMode
+                        ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                        : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                    } transition-all duration-300 flex items-center`}
+                    aria-label="Afficher les données de recensement"
+                  >
+                    <BookText className="w-5 h-5" />
+                  </button>
                 )}
               </div>
               {/* Légende */}
@@ -1547,369 +1659,501 @@ const App = () => {
                 }
  shadow-lg rounded-lg p-4 border border-gray-300 max-h-64 overflow-y-auto`}
               >
-                <h3
-                  className={`font-bold ${
-                    isDarkMode ? "text-blue-300" : "text-blue-700"
-                  } mb-3 text-lg`}
-                >
-                  {t.legend}
-                </h3>
-                <ul>
-                  {layers.map((item, index) => (
-                    <li key={index} className="flex items-center mb-2">
-                      {/* Forme conditionnelle */}
-                      {item.type === "polygone" && (
-                        <span
-                          className="w-4 h-4 inline-block mr-2"
-                          style={{ backgroundColor: item.color }}
-                        ></span>
-                      )}
-                      {item.type === "polyline" && (
-                        <div
-                          className="w-4 h-1 inline-block mr-2"
-                          style={{
-                            backgroundColor: item.color,
-                            transform: "translateY(50%)",
-                          }}
-                        ></div>
-                      )}
-                      {item.type === "point" && (
-                        <img
-                          src={
-                            "https://static.thenounproject.com/png/265-512.png"
-                          }
-                          alt="Point Icon"
-                          className="w-4 h-4 inline-block mr-2"
-                        />
-                      )}
-
-                      <span
-                        className={`${
-                          isDarkMode ? "text-white" : "text-black"
-                        }`}
+                {legendVisible ? (
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <h3
+                        className={`font-bold ${
+                          isDarkMode ? "text-blue-300" : "text-blue-700"
+                        } mb-3 text-lg`}
                       >
-                        {t[item.layer]}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                        {t.legend}
+                      </h3>
+                      <button
+                        onClick={() => setLegendVisible(false)}
+                        className={`absolute top-3 right-3 
+        p-1 rounded-full hover:bg-opacity-20 ${
+          isDarkMode
+            ? "text-gray-300 hover:bg-gray-700"
+            : "text-gray-700 hover:bg-gray-200"
+        }`}
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <ul>
+                      {layers.map((item, index) => (
+                        <li key={index} className="flex items-center mb-2">
+                          {/* Forme conditionnelle */}
+                          {item.type === "polygone" && (
+                            <span
+                              className="w-4 h-4 inline-block mr-2"
+                              style={{ backgroundColor: item.color }}
+                            ></span>
+                          )}
+                          {item.type === "polyline" && (
+                            <div
+                              className="w-4 h-1 inline-block mr-2"
+                              style={{
+                                backgroundColor: item.color,
+                                transform: "translateY(50%)",
+                              }}
+                            ></div>
+                          )}
+                          {item.type === "point" && (
+                            <img
+                              src={
+                                "https://static.thenounproject.com/png/265-512.png"
+                              }
+                              alt="Point Icon"
+                              className="w-4 h-4 inline-block mr-2"
+                            />
+                          )}
+
+                          <span
+                            className={`${
+                              isDarkMode ? "text-white" : "text-black"
+                            }`}
+                          >
+                            {t[item.layer]}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setLegendVisible(true)}
+                    className={`p-2 rounded-lg ${
+                      isDarkMode
+                        ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                        : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                    } transition-all duration-300 flex items-center`}
+                    aria-label="Afficher la légende"
+                  >
+                    <Compass className="w-5 h-5" />
+                  </button>
+                )}
               </div>
               {/* Fenêtre de Contrôle des Couches */}
               <div
                 className={`absolute bottom-8 transition-all duration-300 ease-in-out ${
                   isNavOpen ? "left-72" : "left-24"
-                } w-56 ${
+                } ${layersVisible ? "w-56 " : "w-20"} ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
                 }
  p-4 rounded-lg shadow-lg z-10 max-h-56 overflow-y-auto`}
               >
-                <h3
-                  className={`font-bold ${
-                    isDarkMode ? "text-blue-300" : "text-blue-700"
-                  } text-lg mb-4`}
-                >
-                  {t.selectLayer}
-                </h3>
-                {/* Groupe Découpage Administratif */}
-                <div className="border rounded-lg p-2 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          activeLayers.region &&
-                          activeLayers.province &&
-                          activeLayers.commune
-                        }
-                        onChange={() => {
-                          const newState = !(
-                            activeLayers.region &&
-                            activeLayers.province &&
-                            activeLayers.commune
-                          );
-                          setActiveLayers({
-                            ...activeLayers,
-                            region: newState,
-                            province: newState,
-                            commune: newState,
-                          });
-                        }}
-                        className="mr-2"
-                      />
+                {layersVisible ? (
+                  <div>
+                    <h3
+                      className={`font-bold ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      } text-lg mb-4`}
+                    >
+                      {activePanel === "layers" ? t.selectLayer : t.baseMap}
+                    </h3>
+                    <div className="flex gap-2">
                       <button
-                        onClick={() => setIsAdminExpanded(!isAdminExpanded)}
-                        className={`font-medium ${
-                          isDarkMode ? "text-white" : "text-black"
-                        }`}
-                      >
-                        {t.DA}
-                      </button>
-                    </div>
-                    <ChevronDownIcon
-                      onClick={() => setIsAdminExpanded(!isAdminExpanded)}
-                      className={`w-5 h-5 transform transition-transform ${
-                        isAdminExpanded ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-
-                  {isAdminExpanded && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.region}
-                          onChange={() => toggleLayer("region")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer1}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.province}
-                          onChange={() => toggleLayer("province")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer2}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.commune}
-                          onChange={() => toggleLayer("commune")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer3}
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Groupe Réseau Routier */}
-                <div className="border rounded-lg p-2 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          activeLayers.routenationale &&
-                          activeLayers.routeregionale &&
-                          activeLayers.routeprovinciale
+                        onClick={() =>
+                          setActivePanel((prev) =>
+                            prev === "layers" ? "baseMap" : "layers"
+                          )
                         }
-                        onChange={() => {
-                          const newState = !(
-                            activeLayers.routenationale &&
-                            activeLayers.routeregionale &&
-                            activeLayers.routeprovinciale
-                          );
-                          setActiveLayers({
-                            ...activeLayers,
-                            routenationale: newState,
-                            routeregionale: newState,
-                            routeprovinciale: newState,
-                          });
-                        }}
-                        className="mr-2"
-                      />
-                      <button
-                        onClick={() => setIsRoadExpanded(!isRoadExpanded)}
-                        className={`font-medium ${
-                          isDarkMode ? "text-white" : "text-black"
+                        className={` absolute top-10 right-3 p-1 rounded-full ${
+                          isDarkMode
+                            ? "text-gray-300 hover:bg-gray-700"
+                            : "text-gray-700 hover:bg-gray-200"
                         }`}
-                      >
-                        {t.RR}
-                      </button>
-                    </div>
-                    <ChevronDownIcon
-                      onClick={() => setIsRoadExpanded(!isRoadExpanded)}
-                      className={`w-5 h-5 transform transition-transform ${
-                        isRoadExpanded ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
-
-                  {isRoadExpanded && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.routenationale}
-                          onChange={() => toggleLayer("routenationale")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer4}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.routeregionale}
-                          onChange={() => toggleLayer("routeregionale")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer6}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.routeprovinciale}
-                          onChange={() => toggleLayer("routeprovinciale")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer5}
-                        </label>
-                      </div>
-                    </div>
-                  )}
-                </div>
-                {/* Groupe hydrographie */}
-                <div className="border rounded-lg p-2 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={
-                          activeLayers.barrage &&
-                          activeLayers.bassin &&
-                          activeLayers.oued &&
-                          activeLayers.nappe
+                        aria-label={
+                          activePanel === "layers"
+                            ? t.switchToBaseMap
+                            : t.switchToLayers
                         }
-                        onChange={() => {
-                          const newState = !(
-                            activeLayers.barrage &&
-                            activeLayers.bassin &&
-                            activeLayers.oued &&
-                            activeLayers.nappe
-                          );
-                          setActiveLayers({
-                            ...activeLayers,
-                            barrage: newState,
-                            bassin: newState,
-                            oued: newState,
-                            nappe: newState,
-                          });
-                        }}
-                        className="mr-2"
-                      />
-                      <button
-                        onClick={() => setIsHydroExpanded(!isHydroExpanded)}
-                        className={`font-medium ${
-                          isDarkMode ? "text-white" : "text-black"
-                        }`}
                       >
-                        {t.HY}
+                        {activePanel === "layers" ? (
+                          <Map className="w-5 h-5" />
+                        ) : (
+                          <Layers className="w-5 h-5" />
+                        )}
                       </button>
-                    </div>
-                    <ChevronDownIcon
-                      onClick={() => setIsHydroExpanded(!isHydroExpanded)}
-                      className={`w-5 h-5 transform transition-transform ${
-                        isHydroExpanded ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
+                      <button
+                        onClick={() => setLayersVisible(false)}
+                        className={`absolute top-3 right-3 
+        p-1 rounded-full hover:bg-opacity-20 ${
+          isDarkMode
+            ? "text-gray-300 hover:bg-gray-700"
+            : "text-gray-700 hover:bg-gray-200"
+        }`}
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
+                      {/* Contenu dynamique */}
+                      {activePanel === "layers" ? (
+                        <div className="space-y-2">
+                          {/* Groupe Découpage Administratif */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    activeLayers.region &&
+                                    activeLayers.province &&
+                                    activeLayers.commune
+                                  }
+                                  onChange={() => {
+                                    const newState = !(
+                                      activeLayers.region &&
+                                      activeLayers.province &&
+                                      activeLayers.commune
+                                    );
+                                    setActiveLayers({
+                                      ...activeLayers,
+                                      region: newState,
+                                      province: newState,
+                                      commune: newState,
+                                    });
+                                  }}
+                                  className="mr-2"
+                                />
+                                <button
+                                  onClick={() =>
+                                    setIsAdminExpanded(!isAdminExpanded)
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.DA}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsAdminExpanded(!isAdminExpanded)
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isAdminExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
 
-                  {isHydroExpanded && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.barrage}
-                          onChange={() => toggleLayer("barrage")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer7}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.bassin}
-                          onChange={() => toggleLayer("bassin")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer8}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.oued}
-                          onChange={() => toggleLayer("oued")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer9}
-                        </label>
-                      </div>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activeLayers.nappe}
-                          onChange={() => toggleLayer("nappe")}
-                          className="mr-2"
-                        />
-                        <label
-                          className={`${
-                            isDarkMode ? "text-white" : "text-black"
-                          }`}
-                        >
-                          {t.layer10}
-                        </label>
-                      </div>
+                            {isAdminExpanded && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.region}
+                                    onChange={() => toggleLayer("region")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer1}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.province}
+                                    onChange={() => toggleLayer("province")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer2}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.commune}
+                                    onChange={() => toggleLayer("commune")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer3}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Groupe Réseau Routier */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    activeLayers.routenationale &&
+                                    activeLayers.routeregionale &&
+                                    activeLayers.routeprovinciale
+                                  }
+                                  onChange={() => {
+                                    const newState = !(
+                                      activeLayers.routenationale &&
+                                      activeLayers.routeregionale &&
+                                      activeLayers.routeprovinciale
+                                    );
+                                    setActiveLayers({
+                                      ...activeLayers,
+                                      routenationale: newState,
+                                      routeregionale: newState,
+                                      routeprovinciale: newState,
+                                    });
+                                  }}
+                                  className="mr-2"
+                                />
+                                <button
+                                  onClick={() =>
+                                    setIsRoadExpanded(!isRoadExpanded)
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.RR}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsRoadExpanded(!isRoadExpanded)
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isRoadExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isRoadExpanded && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.routenationale}
+                                    onChange={() =>
+                                      toggleLayer("routenationale")
+                                    }
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer4}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.routeregionale}
+                                    onChange={() =>
+                                      toggleLayer("routeregionale")
+                                    }
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer6}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.routeprovinciale}
+                                    onChange={() =>
+                                      toggleLayer("routeprovinciale")
+                                    }
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer5}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Groupe hydrographie */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    activeLayers.barrage &&
+                                    activeLayers.bassin &&
+                                    activeLayers.oued &&
+                                    activeLayers.nappe
+                                  }
+                                  onChange={() => {
+                                    const newState = !(
+                                      activeLayers.barrage &&
+                                      activeLayers.bassin &&
+                                      activeLayers.oued &&
+                                      activeLayers.nappe
+                                    );
+                                    setActiveLayers({
+                                      ...activeLayers,
+                                      barrage: newState,
+                                      bassin: newState,
+                                      oued: newState,
+                                      nappe: newState,
+                                    });
+                                  }}
+                                  className="mr-2"
+                                />
+                                <button
+                                  onClick={() =>
+                                    setIsHydroExpanded(!isHydroExpanded)
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.HY}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsHydroExpanded(!isHydroExpanded)
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isHydroExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isHydroExpanded && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.barrage}
+                                    onChange={() => toggleLayer("barrage")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer7}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.bassin}
+                                    onChange={() => toggleLayer("bassin")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer8}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.oued}
+                                    onChange={() => toggleLayer("oued")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer9}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.nappe}
+                                    onChange={() => toggleLayer("nappe")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer10}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          {Object.entries(baseMaps).map(([key, map], index) => (
+                            <button
+                              key={key}
+                              onClick={() => setBaseMap(key)}
+                              className={`w-full text-left px-3 py-1 rounded-md ${
+                                index === 0
+                                  ? "mt-2 "
+                                  : "" /* marge seulement pour le premier élément */
+                              }${
+                                baseMap === key
+                                  ? isDarkMode
+                                    ? "bg-blue-600 text-white"
+                                    : "bg-blue-100 text-blue-800"
+                                  : isDarkMode
+                                  ? "hover:bg-gray-700 text-gray-300"
+                                  : "hover:bg-gray-200 text-gray-700"
+                              }`}
+                            >
+                              {t[key as keyof typeof t]}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setLayersVisible(true)}
+                    className={`p-2 rounded-lg ${
+                      isDarkMode
+                        ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                        : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                    } transition-all duration-300 flex items-center`}
+                    aria-label="Afficher les contrôles des couches"
+                  >
+                    {activePanel === "layers" ? (
+                      <Layers className="w-5 h-5" />
+                    ) : (
+                      <Map className="w-5 h-5" />
+                    )}
+                  </button>
+                )}
               </div>
             </>
           ) : (

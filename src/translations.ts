@@ -370,13 +370,18 @@ Sud:"Sud",
 
     enter_fullscreen:"Passer en plein écran",
     exit_fullscreen:"Quitter le plein écran",
+    baseMap: "Fond de carte",
+    osm: "OpenStreetMap",
+    satellite: "Satellite",
+    topo: "Topographique",
+    dark: "Mode Nuit",
 
 
   },
   en: {
     title: "land GIS for the regional housing plan by 2034",
     title2: "For the Drâa-Tafilalet region",
-    desc: "This platform was developed as part of a final year project. It aims to design a land information system (LIS) dedicated to the Regional Housing Plan for 2034 in the Drâa-Tafilalet region, enabling advanced territorial analysis and improved land management for optimized urban planning.",
+    desc: "This platform was developed as part of a final year project. It aims to design a land information system (GIS) dedicated to the Regional Housing Plan for 2034 in the Drâa-Tafilalet region, enabling advanced territorial analysis and improved land management for optimized urban planning.",
     controlPanel: "Control Panel",
     home: "Home",
     map: "Map",
@@ -742,6 +747,11 @@ valeurs:"Values",
 
     enter_fullscreen:"Enter fullscreen",
     exit_fullscreen:"Exit fullscreen",
+    baseMap: "Base Map",
+    osm: "OpenStreetMap",
+    satellite: "Satellite",
+    topo: "Topographic",
+    dark: "Dark Mode",
 
   },
   ar: {
@@ -1115,6 +1125,11 @@ valeurs:"قيم",
 
     enter_fullscreen:"تفعيل وضع ملء الشاشة",
     exit_fullscreen:"الخروج من وضع ملء الشاشة",
+    baseMap: "الخريطة ",
+    osm: "أوبن ستريت ماب",
+    satellite: "القمر الصناعي",
+    topo: "طبوغرافي",
+    dark: "الوضع الليلي",
 
 
   },
