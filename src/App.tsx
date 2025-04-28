@@ -66,6 +66,8 @@ const App = () => {
 
   const [isNavOpen, setIsNavOpen] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [language, setLanguage] = useState<Language>("fr");
+  const t = translations[language];
   const [expandedSections, setExpandedSections] = useState({
     Demography: false,
     Health: false,
@@ -340,12 +342,175 @@ const App = () => {
       "EE_20+",
     ],
   };
-  const [language, setLanguage] = useState<Language>("fr");
   const position: [number, number] = [31.300779713704344, -4.78346132014275];
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [dataWindowVisible, setDataWindowVisible] = useState(false);
   const [legendVisible, setLegendVisible] = useState(false);
   const [layersVisible, setLayersVisible] = useState(false);
+  const [showTour, setShowTour] = useState(true); // Contrôle l'affichage du guide
+  const [currentStep, setCurrentStep] = useState(0); // Étape actuelle du guide
+  const [isFirstVisit, setIsFirstVisit] = useState(true); // Pour ne montrer le guide qu'une fois
+  const tourSteps = [
+    {
+      target: null,
+      title: t.tourWelcomeTitle,
+      content: t.tourWelcomeContent,
+      position: "center",
+    },
+    {
+      target: ".layers-control-btn",
+      title: t.tourLayersTitle,
+      content: t.tourLayersContent,
+      position: "right",
+    },
+    {
+      target: ".base-map-btn",
+      title: t.tourBaseMapTitle,
+      content: t.tourBaseMapContent,
+      position: "left",
+    },
+    {
+      target: ".legend-btn",
+      title: t.tourLegendTitle,
+      content: t.tourLegendContent,
+      position: "left",
+    },
+    {
+      target: ".search-control",
+      title: t.tourSearchTitle,
+      content: t.tourSearchContent,
+      position: "bottom",
+    },
+    {
+      target: ".data-window-btn",
+      title: t.tourDataTitle,
+      content: t.tourDataContent,
+      position: "right",
+    },
+  ];
+  const getTargetPosition = (selector: string) => {
+    const element = document.querySelector(selector);
+    if (!element) return { top: "50%", left: "50%" };
+
+    const rect = element.getBoundingClientRect();
+    return {
+      top: `${rect.top + window.scrollY}px`,
+      left: `${rect.left + window.scrollX}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+    };
+  };
+  const getWindowPosition = () => {
+    if (!tourSteps[currentStep].target)
+      return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+
+    const targetRect = document
+      .querySelector(tourSteps[currentStep].target)
+      ?.getBoundingClientRect();
+    if (!targetRect)
+      return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+
+    const windowHeight = window.innerHeight;
+    const spaceBelow = windowHeight - targetRect.bottom;
+    if (tourSteps[currentStep].target.includes("legend")) {
+      return "left-[calc(100%-320px)] bottom-0 -translate-y-1/2";
+    }
+
+    return spaceBelow < 300
+      ? "bottom-[calc(100%+20px)] left-1/2 transform -translate-x-1/2"
+      : "top-[calc(100%+20px)] left-1/2 transform -translate-x-1/2";
+  };
+  const handleNextStep = () => {
+    if (currentStep < tourSteps.length - 1) {
+      setCurrentStep((prev) => prev + 1);
+    } else {
+      setShowTour(false);
+      setIsFirstVisit(false);
+    }
+  };
+  // Dans le composant App, ajoutez ces nouveaux états :
+  const [showHomeTour, setShowHomeTour] = useState(true);
+  const [currentHomeStep, setCurrentHomeStep] = useState(0);
+  const [isFirstHomeVisit, setIsFirstHomeVisit] = useState(true);
+
+  const homeTourSteps = [
+    {
+      target: null,
+      title: t.homeTourWelcomeTitle,
+      content: t.homeTourWelcomeContent,
+      position: "center",
+    },
+    {
+      target: ".nav-toggle-btn",
+      title: t.homeTourNavTitle,
+      content: t.homeTourNavContent,
+      position: "right",
+    },
+    {
+      target: ".theme-toggle-btn",
+      title: t.homeTourThemeTitle,
+      content: t.homeTourThemeContent,
+      position: "right",
+    },
+    {
+      target: ".lang-selector",
+      title: t.homeTourLangTitle,
+      content: t.homeTourLangContent,
+      position: "right",
+    },
+    {
+      target: ".map-access-btn",
+      title: t.homeTourMapBtnTitle,
+      content: t.homeTourMapBtnContent,
+      position: "center",
+    },
+  ];
+
+  const handleNextHomeStep = () => {
+    if (currentHomeStep < homeTourSteps.length - 1) {
+      setCurrentHomeStep((prev) => prev + 1);
+    } else {
+      setShowHomeTour(false);
+      setIsFirstHomeVisit(false);
+    }
+  };
+
+  // Ajoutez cette fonction pour le positionnement du guide sur la page d'accueil
+  const getHomeTargetPosition = (selector: string | null) => {
+    if (!selector) return { top: "50%", left: "50%" };
+
+    const element = document.querySelector(selector);
+    if (!element) return { top: "50%", left: "50%" };
+
+    const rect = element.getBoundingClientRect();
+    return {
+      top: `${rect.top + window.scrollY}px`,
+      left: `${rect.left + window.scrollX}px`,
+      width: `${rect.width}px`,
+      height: `${rect.height}px`,
+    };
+  };
+
+  const getHomeWindowPosition = () => {
+    if (!homeTourSteps[currentHomeStep].target)
+      return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+
+    const targetRect = document
+      .querySelector(homeTourSteps[currentHomeStep].target)
+      ?.getBoundingClientRect();
+    if (!targetRect)
+      return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
+    if (homeTourSteps[currentHomeStep].target.includes("theme")) {
+      return "left-[calc(100%+32px)] bottom-0 -translate-y-1/3";
+    }
+
+    const windowHeight = window.innerHeight;
+    const spaceBelow = windowHeight - targetRect.bottom;
+
+    return spaceBelow < 300
+      ? "bottom-[calc(100%+20px)] left-1/2 transform -translate-x-1/2"
+      : "top-[calc(100%+20px)] left-1/2 transform -translate-x-1/2";
+  };
   const [activePanel, setActivePanel] = useState<"layers" | "baseMap">(
     "baseMap"
   );
@@ -436,7 +601,6 @@ const App = () => {
       }
     });
   };
-  const t = translations[language];
   const [isAdminExpanded, setIsAdminExpanded] = useState(false);
   const [isRoadExpanded, setIsRoadExpanded] = useState(false);
   const [isHydroExpanded, setIsHydroExpanded] = useState(false);
@@ -690,6 +854,121 @@ const App = () => {
         isDarkMode ? "bg-gray-900 text-white" : "bg-gray-400 text-black"
       } ${language === "ar" ? "rtl" : "ltr"}`}
     >
+      {isFirstHomeVisit && showHomeTour && currentPage === "accueil" && (
+        <div className="fixed inset-0 bg-black/50 z-[9998]">
+          <div
+            className="fixed z-[9999]"
+            style={getHomeTargetPosition(homeTourSteps[currentHomeStep].target)}
+          >
+            {homeTourSteps[currentHomeStep].target && (
+              <div className="absolute inset-0 border-4 border-blue-400 rounded-xl shadow-[0_0_20px_3px_rgba(96,165,250,0.5)] animate-pulse" />
+            )}
+
+            <div
+              className={`
+            absolute ${getHomeWindowPosition()}
+            min-w-[300px] min-h-[150px]  
+            max-w-[90vw] max-h-[80vh]    
+            p-6 rounded-xl shadow-2xl
+            ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}
+            transition-all duration-300
+          `}
+            >
+              <h3 className="text-xl font-bold mb-3">
+                {homeTourSteps[currentHomeStep].title}
+              </h3>
+              <p className="mb-6 text-lg leading-relaxed">
+                {homeTourSteps[currentHomeStep].content}
+              </p>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm opacity-75">
+                  {currentHomeStep + 1}/{homeTourSteps.length}
+                </span>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowHomeTour(false);
+                      setIsFirstHomeVisit(false);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+                  >
+                    {t.skipBtn}
+                  </button>
+                  <button
+                    onClick={handleNextHomeStep}
+                    className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    {currentHomeStep === homeTourSteps.length - 1
+                      ? t.doneBtn
+                      : t.nextBtn}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {isFirstVisit && showTour && currentPage === "map" && (
+        <div className="fixed inset-0 bg-black/50  z-[9998]">
+          {/* Conteneur principal */}
+          <div
+            className="fixed z-[9999]"
+            style={getTargetPosition(tourSteps[currentStep].target)}
+          >
+            {/* Effet de surbrillance */}
+            {tourSteps[currentStep].target && (
+              <div className="absolute inset-0 border-4 border-blue-400 rounded-xl shadow-[0_0_20px_3px_rgba(96,165,250,0.5)] animate-pulse" />
+            )}
+
+            {/* Fenêtre explicative */}
+            <div
+              className={`
+        absolute ${getWindowPosition()}
+        min-w-[300px] min-h-[150px]  
+        max-w-[90vw] max-h-[80vh]    
+        p-6 rounded-xl shadow-2xl
+        ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}
+        transition-all duration-300
+      `}
+            >
+              {/* Contenu */}
+              <h3 className="text-xl font-bold mb-3">
+                {tourSteps[currentStep].title}
+              </h3>
+              <p className="mb-6 text-lg leading-relaxed">
+                {tourSteps[currentStep].content}
+              </p>
+
+              {/* Contrôles */}
+              <div className="flex justify-between items-center">
+                <span className="text-sm opacity-75">
+                  {currentStep + 1}/{tourSteps.length}
+                </span>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowTour(false);
+                      setIsFirstVisit(false);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800"
+                  >
+                    {t.skipBtn}
+                  </button>
+                  <button
+                    onClick={handleNextStep}
+                    className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    {currentStep === tourSteps.length - 1
+                      ? t.doneBtn
+                      : t.nextBtn}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Navigation Sidebar */}
       <div
         className={`${isNavOpen ? "w-64" : "w-20"} ${
@@ -698,7 +977,7 @@ const App = () => {
       >
         <button
           onClick={() => setIsNavOpen(!isNavOpen)}
-          className={`absolute -right-3 top-9 ${
+          className={`nav-toggle-btn absolute -right-3 top-9 ${
             isDarkMode ? "bg-black" : "bg-gray-200"
           }
            rounded-full p-1 z-10`}
@@ -730,7 +1009,7 @@ const App = () => {
           </nav>
           <button
             onClick={toggleDarkMode}
-            className={`absolute -left-1/5 bottom-4 p-2 rounded-full ${
+            className={`theme-toggle-btn absolute -left-1/5 bottom-4 p-2 rounded-full ${
               isDarkMode ? "bg-black text-white" : "bg-gray-200 text-black"
             }`}
             aria-label="Toggle dark mode"
@@ -739,7 +1018,7 @@ const App = () => {
           </button>
           {/* Bouton de sélection de la langue */}
           {isNavOpen && (
-            <div className="absolute bottom-4 right-4">
+            <div className="lang-selector absolute bottom-4 right-4">
               <div className="relative inline-block">
                 <Globe
                   size={24}
@@ -796,7 +1075,7 @@ const App = () => {
         <div className="flex-1">
           {currentPage === "map" ? (
             <>
-              <div className="absolute top-24 right-4 z-10">
+              <div className="search-control absolute top-24 right-4 z-10">
                 <div className="relative">
                   {/* Champ de recherche */}
                   <input
@@ -924,7 +1203,7 @@ const App = () => {
                 )}
               </MapContainer>
               <div
-                className={`absolute top-24 transition-all duration-300 ease-in-out ${
+                className={`data-window-btn absolute top-24 transition-all duration-300 ease-in-out ${
                   isNavOpen ? "left-80" : "left-32"
                 } ${
                   isExpanded
@@ -1652,7 +1931,7 @@ const App = () => {
               </div>
               {/* Légende */}
               <div
-                className={`absolute bottom-6 right-6 ${
+                className={`legend-btn absolute bottom-6 right-6 ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
@@ -2145,7 +2424,7 @@ const App = () => {
                         setLayersVisible(true);
                         setActivePanel("layers");
                       }}
-                      className={`p-2 rounded-lg ${
+                      className={`layers-control-btn p-2 rounded-lg ${
                         isDarkMode
                           ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
                           : "bg-gray-200 hover:bg-gray-300 text-blue-700"
@@ -2159,7 +2438,7 @@ const App = () => {
                         setLayersVisible(true);
                         setActivePanel("baseMap");
                       }}
-                      className={`p-2 rounded-lg ${
+                      className={`base-map-btn p-2 rounded-lg ${
                         isDarkMode
                           ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
                           : "bg-gray-200 hover:bg-gray-300 text-blue-700"
@@ -2222,7 +2501,7 @@ const App = () => {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setCurrentPage("map")}
-                className={` ${
+                className={`map-access-btn ${
                   isDarkMode
                     ? "bg-blue-400 hover:bg-blue-500 text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-black"
