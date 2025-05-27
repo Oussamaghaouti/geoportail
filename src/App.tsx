@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { jsPDF } from "jspdf";
 import amiriFont from "./amiri.tsx";
 import {
@@ -16,16 +16,18 @@ import {
   Layers,
   BookText,
   ListOrdered,
+  BarChart2, // Keep this for the button icon
 } from "lucide-react";
 import L, { icon } from "leaflet";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
 import { Maximize2, Minimize2 } from "lucide-react";
-import Loading from "./loading"; // Importez votre composant de chargement
+import Loading from "./loading";
 import {
   useMap,
   MapContainer,
   TileLayer,
+  WMSTileLayer,
   Polygon,
   Polyline,
   Popup,
@@ -45,6 +47,8 @@ import {
 import "leaflet/dist/leaflet.css";
 import { translations, type Language } from "./translations";
 import { polygons, polylines, points1 } from "./data.tsx";
+import GraphPage from "./GraphPage";
+
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedPolygon, setSelectedPolygon] = useState<
@@ -55,12 +59,9 @@ const App = () => {
   };
 
   useEffect(() => {
-    // Simulez un temps de chargement minimum de 2 secondes
     const timer = setTimeout(() => {
       setIsLoading(false);
     }, 3000);
-
-    // Nettoyez le timer pour éviter des effets secondaires
     return () => clearTimeout(timer);
   }, []);
 
@@ -80,7 +81,7 @@ const App = () => {
     cl_emp: false,
     creation: false,
   });
-  const [currentPage, setCurrentPage] = useState("accueil");
+  const [currentPage, setCurrentPage] = useState("accueil"); // Can be "accueil", "map", "graph"
   const [activeLayers, setActiveLayers] = useState({
     commune: false,
     province: false,
@@ -92,6 +93,8 @@ const App = () => {
     bassin: false,
     oued: false,
     nappe: false,
+    midelt_P: false,
+    errachidia_P: false,
   });
   const barrageIcon = new L.Icon({
     iconUrl: "https://static.thenounproject.com/png/265-512.png",
@@ -101,7 +104,7 @@ const App = () => {
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [baseMap, setBaseMap] = useState<string>("osm"); // État pour la carte active
+  const [baseMap, setBaseMap] = useState<string>("osm");
   const baseMaps = {
     osm: {
       name: "OpenStreetMap",
@@ -131,7 +134,6 @@ const App = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.toLowerCase();
     setSearchTerm(value);
-
     if (value.trim() === "") {
       setSuggestions([]);
       return;
@@ -141,7 +143,6 @@ const App = () => {
         (item) => t[item.name] && t[item.name].toLowerCase().includes(value)
       )
       .slice(0, 3);
-
     setSuggestions(results);
   };
   const [selectedFeature, setSelectedFeature] = useState(null);
@@ -149,14 +150,12 @@ const App = () => {
 
   const MapZoomHandler = ({ selectedFeature }) => {
     const map = useMap();
-
     useEffect(() => {
       if (shouldZoom && selectedFeature && selectedFeature.positions) {
         map.flyToBounds(selectedFeature.positions, { padding: [50, 50] });
         setShouldZoom(false);
       }
     }, [shouldZoom, selectedFeature, map, setShouldZoom]);
-
     return null;
   };
   const zoomToFeature = (feature) => {
@@ -166,7 +165,6 @@ const App = () => {
   const matchesSearch = (name: string | undefined) => {
     return searchTerm && name && name.toLowerCase().includes(searchTerm);
   };
-
   const getHighlightClass = (name: string | undefined) => {
     return matchesSearch(name) ? "fill-yellow-800 stroke-yellow-800" : "";
   };
@@ -178,7 +176,6 @@ const App = () => {
   };
   const toggleFullscreen = () => {
     const element = document.getElementById("data-window");
-
     if (!isFullscreen) {
       if (element?.requestFullscreen) {
         element.requestFullscreen();
@@ -198,12 +195,20 @@ const App = () => {
         setShowDownloadOptions(false);
       }
     };
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showDownloadOptions]);
 
+  // Removed graph-related states here. They are now in GraphPage.tsx
+  // const [showGraphModal, setShowGraphModal] = useState(false);
+  // const [selectedGraphCategory, setSelectedGraphCategory] = useState<string>("");
+  // const [selectedGraphIndicator, setSelectedGraphIndicator] = useState<string>("");
+  // const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
+  // const chartRef = useRef<HTMLCanvasElement | null>(null);
+  // const chartInstanceRef = useRef<Chart | null>(null);
+
+  // Data categories are still needed here for the data display window
   const dataCategories = {
     Demography: [
       "pop2024",
@@ -347,9 +352,10 @@ const App = () => {
   const [dataWindowVisible, setDataWindowVisible] = useState(false);
   const [legendVisible, setLegendVisible] = useState(false);
   const [layersVisible, setLayersVisible] = useState(false);
-  const [showTour, setShowTour] = useState(true); // Contrôle l'affichage du guide
-  const [currentStep, setCurrentStep] = useState(0); // Étape actuelle du guide
-  const [isFirstVisit, setIsFirstVisit] = useState(true); // Pour ne montrer le guide qu'une fois
+  const [showTour, setShowTour] = useState(true);
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isFirstVisit, setIsFirstVisit] = useState(true);
+  const [isFirstSiteVisit, setIsFirstSiteVisit] = useState(true);
   const tourSteps = [
     {
       target: null,
@@ -391,7 +397,6 @@ const App = () => {
   const getTargetPosition = (selector: string) => {
     const element = document.querySelector(selector);
     if (!element) return { top: "50%", left: "50%" };
-
     const rect = element.getBoundingClientRect();
     return {
       top: `${rect.top + window.scrollY}px`,
@@ -403,19 +408,19 @@ const App = () => {
   const getWindowPosition = () => {
     if (!tourSteps[currentStep].target)
       return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-
     const targetRect = document
       .querySelector(tourSteps[currentStep].target)
       ?.getBoundingClientRect();
     if (!targetRect)
       return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-
-    const windowHeight = window.innerHeight;
-    const spaceBelow = windowHeight - targetRect.bottom;
     if (tourSteps[currentStep].target.includes("legend")) {
       return "left-[calc(100%-320px)] bottom-0 -translate-y-1/2";
     }
-
+    if (tourSteps[currentStep].target.includes("layers")) {
+      return "left-[calc(100%)] bottom-0 -translate-y-1/3";
+    }
+    const windowHeight = window.innerHeight;
+    const spaceBelow = windowHeight - targetRect.bottom;
     return spaceBelow < 300
       ? "bottom-[calc(100%+20px)] left-1/2 transform -translate-x-1/2"
       : "top-[calc(100%+20px)] left-1/2 transform -translate-x-1/2";
@@ -428,7 +433,6 @@ const App = () => {
       setIsFirstVisit(false);
     }
   };
-  // Dans le composant App, ajoutez ces nouveaux états :
   const [showHomeTour, setShowHomeTour] = useState(true);
   const [currentHomeStep, setCurrentHomeStep] = useState(0);
   const [isFirstHomeVisit, setIsFirstHomeVisit] = useState(true);
@@ -475,13 +479,10 @@ const App = () => {
     }
   };
 
-  // Ajoutez cette fonction pour le positionnement du guide sur la page d'accueil
   const getHomeTargetPosition = (selector: string | null) => {
     if (!selector) return { top: "50%", left: "50%" };
-
     const element = document.querySelector(selector);
     if (!element) return { top: "50%", left: "50%" };
-
     const rect = element.getBoundingClientRect();
     return {
       top: `${rect.top + window.scrollY}px`,
@@ -494,7 +495,6 @@ const App = () => {
   const getHomeWindowPosition = () => {
     if (!homeTourSteps[currentHomeStep].target)
       return "top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2";
-
     const targetRect = document
       .querySelector(homeTourSteps[currentHomeStep].target)
       ?.getBoundingClientRect();
@@ -503,10 +503,8 @@ const App = () => {
     if (homeTourSteps[currentHomeStep].target.includes("theme")) {
       return "left-[calc(100%+32px)] bottom-0 -translate-y-1/3";
     }
-
     const windowHeight = window.innerHeight;
     const spaceBelow = windowHeight - targetRect.bottom;
-
     return spaceBelow < 300
       ? "bottom-[calc(100%+20px)] left-1/2 transform -translate-x-1/2"
       : "top-[calc(100%+20px)] left-1/2 transform -translate-x-1/2";
@@ -586,6 +584,16 @@ const App = () => {
       layer: "nappe",
       type: "polygone",
     },
+    {
+      color: "#25E610",
+      layer: "midelt_P",
+      type: "polygone",
+    },
+    {
+      color: "#EE00FF",
+      layer: "errachidia_P",
+      type: "polygone",
+    },
   ];
   const changeLanguage = () => {
     setLanguage((prevLang) => {
@@ -604,10 +612,14 @@ const App = () => {
   const [isAdminExpanded, setIsAdminExpanded] = useState(false);
   const [isRoadExpanded, setIsRoadExpanded] = useState(false);
   const [isHydroExpanded, setIsHydroExpanded] = useState(false);
+  const [isLandExpanded, setisLandExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleExpand = () => {
     setIsExpanded((prev) => !prev);
   };
+
+  // Removed Chart generation logic and handleCommuneToggle from here. It's now in GraphPage.tsx
+
   const generatePdfReport = (selectedPolygon: any, t: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -641,7 +653,6 @@ const App = () => {
       }
     });
 
-    // Données de santé
     doc.setFontSize(16);
     doc.text(`${t.Health}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -659,7 +670,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de éducation
+
     doc.setFontSize(16);
     doc.text(`${t.education}`, pageWidth / 2, yOffset + 10, {
       align: "center",
@@ -679,7 +690,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de langues
+
     doc.setFontSize(16);
     doc.text(`${t.langues}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -697,7 +708,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de emploi
+
     doc.setFontSize(16);
     doc.text(`${t.emploi}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -715,7 +726,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de menages
+
     doc.setFontSize(16);
     doc.text(`${t.menages}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -733,7 +744,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de economie
+
     doc.setFontSize(16);
     doc.text(`${t.economie}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -751,7 +762,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de serac
+
     doc.setFontSize(16);
     doc.text(`${t.secac}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -769,7 +780,7 @@ const App = () => {
         yOffset = 20;
       }
     });
-    // Données de cl_emp
+
     doc.setFontSize(16);
     doc.text(`${t.cl_emp}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -788,7 +799,6 @@ const App = () => {
       }
     });
 
-    // Données de création
     doc.setFontSize(16);
     doc.text(`${t.creation}`, pageWidth / 2, yOffset + 10, { align: "center" });
     yOffset += 20;
@@ -807,17 +817,14 @@ const App = () => {
       }
     });
 
-    // Sauvegarder le PDF
     doc.save(`rapport_recensement_${selectedPolygon.name}.pdf`);
   };
+
   const generateCsvReport = (selectedPolygon: any, t: any) => {
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-
-    // En-têtes
     const headers = [t.Categories, t.indices, t.valeurs];
     csvContent += headers.join(",") + "\r\n";
 
-    // Données
     Object.keys(dataCategories).forEach((category) => {
       dataCategories[category].forEach((key) => {
         const row = [
@@ -829,7 +836,6 @@ const App = () => {
       });
     });
 
-    // Créer un lien de téléchargement
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -846,8 +852,6 @@ const App = () => {
     return <Loading />;
   }
 
-  // Sinon, affichez la page principale
-
   return (
     <div
       className={`flex h-screen ${
@@ -863,16 +867,19 @@ const App = () => {
             {homeTourSteps[currentHomeStep].target && (
               <div className="absolute inset-0 border-4 border-blue-400 rounded-xl shadow-[0_0_20px_3px_rgba(96,165,250,0.5)] animate-pulse" />
             )}
-
             <div
               className={`
-            absolute ${getHomeWindowPosition()}
-            min-w-[300px] min-h-[150px]  
-            max-w-[90vw] max-h-[80vh]    
-            p-6 rounded-xl shadow-2xl
-            ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}
-            transition-all duration-300
-          `}
+                absolute ${getHomeWindowPosition()}
+                min-w-[300px] min-h-[150px]
+                max-w-[90vw] max-h-[80vh]
+                p-6 rounded-xl shadow-2xl
+                ${
+                  isDarkMode
+                    ? "bg-gray-800 text-white"
+                    : "bg-white text-gray-800"
+                }
+                transition-all duration-300
+              `}
             >
               <h3 className="text-xl font-bold mb-3">
                 {homeTourSteps[currentHomeStep].title}
@@ -880,7 +887,6 @@ const App = () => {
               <p className="mb-6 text-lg leading-relaxed">
                 {homeTourSteps[currentHomeStep].content}
               </p>
-
               <div className="flex justify-between items-center">
                 <span className="text-sm opacity-75">
                   {currentHomeStep + 1}/{homeTourSteps.length}
@@ -910,37 +916,34 @@ const App = () => {
         </div>
       )}
       {isFirstVisit && showTour && currentPage === "map" && (
-        <div className="fixed inset-0 bg-black/50  z-[9998]">
-          {/* Conteneur principal */}
+        <div className="fixed inset-0 bg-black/50 z-[9998]">
           <div
             className="fixed z-[9999]"
             style={getTargetPosition(tourSteps[currentStep].target)}
           >
-            {/* Effet de surbrillance */}
             {tourSteps[currentStep].target && (
               <div className="absolute inset-0 border-4 border-blue-400 rounded-xl shadow-[0_0_20px_3px_rgba(96,165,250,0.5)] animate-pulse" />
             )}
-
-            {/* Fenêtre explicative */}
             <div
               className={`
-        absolute ${getWindowPosition()}
-        min-w-[300px] min-h-[150px]  
-        max-w-[90vw] max-h-[80vh]    
-        p-6 rounded-xl shadow-2xl
-        ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}
-        transition-all duration-300
-      `}
+                absolute ${getWindowPosition()}
+                min-w-[300px] min-h-[150px]
+                max-w-[90vw] max-h-[80vh]
+                p-6 rounded-xl shadow-2xl
+                ${
+                  isDarkMode
+                    ? "bg-gray-800 text-white"
+                    : "bg-white text-gray-800"
+                }
+                transition-all duration-300
+              `}
             >
-              {/* Contenu */}
               <h3 className="text-xl font-bold mb-3">
                 {tourSteps[currentStep].title}
               </h3>
               <p className="mb-6 text-lg leading-relaxed">
                 {tourSteps[currentStep].content}
               </p>
-
-              {/* Contrôles */}
               <div className="flex justify-between items-center">
                 <span className="text-sm opacity-75">
                   {currentStep + 1}/{tourSteps.length}
@@ -969,22 +972,19 @@ const App = () => {
           </div>
         </div>
       )}
-      {/* Navigation Sidebar */}
       <div
         className={`${isNavOpen ? "w-64" : "w-20"} ${
           isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"
-        }  transition-all duration-300 ease-in-out relative z-50`}
+        } h-full transition-all duration-300 ease-in-out relative z-50`}
       >
         <button
           onClick={() => setIsNavOpen(!isNavOpen)}
           className={`nav-toggle-btn absolute -right-3 top-9 ${
             isDarkMode ? "bg-black" : "bg-gray-200"
-          }
-           rounded-full p-1 z-10`}
+          } rounded-full p-1 z-10`}
         >
           {isNavOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>
-
         <div className="p-4">
           <div className="flex items-center mb-8">
             <Menu className="h-8 w-8" />
@@ -992,7 +992,6 @@ const App = () => {
               <span className="ml-2 text-xl font-bold">{t.controlPanel}</span>
             )}
           </div>
-
           <nav>
             <NavItem
               icon={<Home />}
@@ -1006,6 +1005,12 @@ const App = () => {
               isOpen={isNavOpen}
               onClick={() => setCurrentPage("map")}
             />
+            <NavItem
+              icon={<BarChart2 />} // Using BarChart2 for the graph icon
+              text={t.graph} // Add 'graph' to your translations
+              isOpen={isNavOpen}
+              onClick={() => setCurrentPage("graph")}
+            />
           </nav>
           <button
             onClick={toggleDarkMode}
@@ -1016,13 +1021,12 @@ const App = () => {
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
-          {/* Bouton de sélection de la langue */}
           {isNavOpen && (
             <div className="lang-selector absolute bottom-4 right-4">
               <div className="relative inline-block">
                 <Globe
                   size={24}
-                  className={`absolute left-3 top-2.5  ${
+                  className={`absolute left-3 top-2.5 ${
                     isDarkMode ? "text-white" : "text-black"
                   }`}
                 />
@@ -1044,18 +1048,16 @@ const App = () => {
           )}
         </div>
       </div>
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Title Bar */}
+        {" "}
+        {/* This is your main content area next to the nav */}
         {currentPage === "map" ? (
           <div
             className={`${
               isDarkMode
                 ? "bg-gradient-to-r from-gray-800 via-black to-gray-800 border-blue-400"
                 : "bg-gradient-to-r from-white via-gray-200 to-white border-blue-700"
-            } 
- shadow-lg p-6  border-b-4  flex items-center justify-center gap-3`}
+            } shadow-lg p-6 border-b-4 flex items-center justify-center gap-3`}
           >
             <Map
               size={32}
@@ -1069,15 +1071,39 @@ const App = () => {
               {t.title}
             </h1>
           </div>
+        ) : currentPage === "graph" ? ( // New header for graph page
+          <div
+            className={`${
+              isDarkMode
+                ? "bg-gradient-to-r from-gray-800 via-black to-gray-800 border-blue-400"
+                : "bg-gradient-to-r from-white via-gray-200 to-white border-blue-700"
+            } shadow-lg p-6 border-b-4 flex items-center justify-center gap-3`}
+          >
+            <BarChart2
+              size={32}
+              className={`${isDarkMode ? "text-blue-300" : "text-blue-700"}`}
+            />
+            <h1
+              className={`text-2xl font-extrabold ${
+                isDarkMode ? "text-white" : "text-black"
+              } drop-shadow-lg`}
+            >
+              {t.graphComparison1}
+            </h1>
+          </div>
         ) : null}
-
-        {/* Map Container */}
-        <div className="flex-1">
+        <div
+          className={`flex-1 ${
+            isDarkMode ? "bg-gray-800" : "bg-white"
+          } overflow-auto`}
+        >
+          {" "}
+          {/* This wrapper needs overflow-auto */}{" "}
+          {/* This div needs to manage its background based on content */}
           {currentPage === "map" ? (
             <>
               <div className="search-control absolute top-24 right-4 z-10">
                 <div className="relative">
-                  {/* Champ de recherche */}
                   <input
                     type="text"
                     value={searchTerm}
@@ -1090,8 +1116,6 @@ const App = () => {
                     }`}
                   />
                   <Search className="absolute left-2 top-2.5 w-5 h-5 text-gray-400" />
-
-                  {/* Affichage des suggestions */}
                   {suggestions.length > 0 && (
                     <div
                       className={`absolute top-full left-0 w-full ${
@@ -1113,7 +1137,6 @@ const App = () => {
                   )}
                 </div>
               </div>
-
               <MapContainer
                 center={position}
                 zoom={7}
@@ -1123,13 +1146,33 @@ const App = () => {
                   url={baseMaps[baseMap].url}
                   attribution={baseMaps[baseMap].attribution}
                 />
+                {activeLayers.midelt_P && (
+                  <WMSTileLayer
+                    url="http://localhost:8080/geoserver/Midelt/wms"
+                    layers="Midelt:midelt"
+                    format="image/png"
+                    transparent={true}
+                    opacity={0.7}
+                    version="1.1.0"
+                    attribution="© Données cadastrales Midelt"
+                  />
+                )}
+                {activeLayers.errachidia_P && (
+                  <WMSTileLayer
+                    url="http://localhost:8080/geoserver/Errachidia/wms"
+                    layers="Errachidia:Errachidia"
+                    format="image/png"
+                    transparent={true}
+                    opacity={0.7}
+                    version="1.1.0"
+                    attribution="© Données cadastrales Errachidia"
+                  />
+                )}
                 <MapZoomHandler
                   selectedFeature={selectedFeature}
                   shouldZoom={shouldZoom}
                   setShouldZoom={setShouldZoom}
                 />
-
-                {/* Render the polygons */}
                 {polygons.map((polygon, index) =>
                   activeLayers[polygon.layer] ? (
                     <Polygon
@@ -1149,7 +1192,11 @@ const App = () => {
                       }}
                     >
                       <Popup>
-                        <div className="font-semibold">{t[polygon.name]}</div>
+                        <div className="font-semibold">
+                          {polygon.layer === "midelt_P"
+                            ? polygon.name
+                            : t[polygon.name]}
+                        </div>
                       </Popup>
                     </Polygon>
                   ) : null
@@ -1196,7 +1243,7 @@ const App = () => {
                           {t.Hauteur} {point.hauteur} {t.metre}
                           <br />
                           {t.Annéemise} {point.annee_mise}
-                        </div>{" "}
+                        </div>
                       </Popup>
                     </Marker>
                   ) : null
@@ -1215,12 +1262,10 @@ const App = () => {
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
-                }
-                rounded-lg shadow-lg z-10 overflow-y-auto`}
+                } rounded-lg shadow-lg z-10 overflow-y-auto`}
               >
                 {dataWindowVisible ? (
                   <div>
-                    {/* Bouton pour agrandir/réduire */}
                     <button
                       onClick={toggleExpand}
                       className={`absolute top-10 right-2 p-1 rounded-full ${
@@ -1252,18 +1297,16 @@ const App = () => {
                         setDataWindowVisible(false);
                         setIsExpanded(false);
                       }}
-                      className={`absolute top-2 right-2
-        p-1 rounded-full ${
-          isDarkMode
-            ? "text-gray-300 hover:bg-gray-700"
-            : "text-gray-700 hover:bg-gray-200"
-        }`}
+                      className={`absolute top-2 right-2 p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
                     >
                       <X className="w-5 h-5" />
                     </button>
-                    {/* Bouton de téléchargement */}
                     {selectedPolygon && (
-                      <div className="absolute top-[70px] right-0">
+                      <div className="absolute top-[70px] right-0 flex gap-2">
                         <div className="relative inline-block">
                           <button
                             onClick={() =>
@@ -1314,9 +1357,22 @@ const App = () => {
                             </div>
                           )}
                         </div>
+                        {/* This button now navigates to the graph page */}
+                        <button
+                          onClick={() => {
+                            setCurrentPage("graph");
+                            setDataWindowVisible(false); // Close data window when navigating
+                          }}
+                          className={`p-1 rounded-full ${
+                            isDarkMode
+                              ? "text-gray-300 hover:bg-gray-700"
+                              : "text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          <BarChart2 className="w-5 h-5 mr-2" />
+                        </button>
                       </div>
                     )}
-
                     {!selectedPolygon || selectedPolygon.layer !== "commune" ? (
                       <p
                         className={`italic ${
@@ -1330,7 +1386,6 @@ const App = () => {
                         <h4 className="font-semibold text-lg mb-2">
                           {t[selectedPolygon.name]}
                         </h4>
-                        {/* Section Démographie */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1343,8 +1398,7 @@ const App = () => {
                             onClick={() => toggleSection("Demography")}
                           >
                             <div className="flex items-center">
-                              <Users className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour Démographie */}
+                              <Users className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.Demography}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1353,7 +1407,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.Demography && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.Demography.map((key) => (
@@ -1388,8 +1441,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-
-                        {/* Section Santé */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1402,8 +1453,7 @@ const App = () => {
                             onClick={() => toggleSection("Health")}
                           >
                             <div className="flex items-center">
-                              <HeartPulse className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour Santé */}
+                              <HeartPulse className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.Health}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1412,7 +1462,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.Health && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.Health.map((key) => (
@@ -1447,8 +1496,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-
-                        {/* Section Éducation */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1461,8 +1508,7 @@ const App = () => {
                             onClick={() => toggleSection("education")}
                           >
                             <div className="flex items-center">
-                              <BookOpen className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour education */}
+                              <BookOpen className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.education}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1471,7 +1517,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.education && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.education.map((key) => (
@@ -1506,7 +1551,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section langues */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1519,8 +1563,7 @@ const App = () => {
                             onClick={() => toggleSection("langues")}
                           >
                             <div className="flex items-center">
-                              <Languages className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour langues */}
+                              <Languages className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.langues}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1529,7 +1572,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.langues && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.langues.map((key) => (
@@ -1564,7 +1606,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section emploi */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1577,8 +1618,7 @@ const App = () => {
                             onClick={() => toggleSection("emploi")}
                           >
                             <div className="flex items-center">
-                              <DollarSign className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour emploi */}
+                              <DollarSign className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.emploi}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1587,7 +1627,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.emploi && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.emploi.map((key) => (
@@ -1622,7 +1661,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section menages */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1635,8 +1673,7 @@ const App = () => {
                             onClick={() => toggleSection("menages")}
                           >
                             <div className="flex items-center">
-                              <Home className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour meanges */}
+                              <Home className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.menages}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1645,7 +1682,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.menages && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.menages.map((key) => (
@@ -1680,7 +1716,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section economie */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1693,8 +1728,7 @@ const App = () => {
                             onClick={() => toggleSection("economie")}
                           >
                             <div className="flex items-center">
-                              <Building className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour economie */}
+                              <Building className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.economie}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1703,7 +1737,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.economie && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.economie.map((key) => (
@@ -1738,7 +1771,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section secac */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1751,8 +1783,7 @@ const App = () => {
                             onClick={() => toggleSection("secac")}
                           >
                             <div className="flex items-center">
-                              <PieChart className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour secac */}
+                              <PieChart className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.secac}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1761,7 +1792,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.secac && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.secac.map((key) => (
@@ -1796,7 +1826,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section cl_emp */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1809,8 +1838,7 @@ const App = () => {
                             onClick={() => toggleSection("cl_emp")}
                           >
                             <div className="flex items-center">
-                              <TrendingUp className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour cl_emp */}
+                              <TrendingUp className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.cl_emp}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1819,7 +1847,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.cl_emp && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.cl_emp.map((key) => (
@@ -1854,7 +1881,6 @@ const App = () => {
                             </ul>
                           )}
                         </div>
-                        {/* Section creation */}
                         <div
                           className={`border rounded-lg p-2 mb-3 ${
                             language === "ar"
@@ -1867,8 +1893,7 @@ const App = () => {
                             onClick={() => toggleSection("creation")}
                           >
                             <div className="flex items-center">
-                              <Calendar className="w-5 h-5 mr-2" />{" "}
-                              {/* Icône pour creation */}
+                              <Calendar className="w-5 h-5 mr-2" />
                               <h5 className="font-medium">{t.creation}</h5>
                             </div>
                             <ChevronDownIcon
@@ -1877,7 +1902,6 @@ const App = () => {
                               }`}
                             />
                           </div>
-
                           {expandedSections.creation && (
                             <ul className="mt-2 space-y-2">
                               {dataCategories.creation.map((key) => (
@@ -1929,15 +1953,16 @@ const App = () => {
                   </button>
                 )}
               </div>
-              {/* Légende */}
+              {/* Removed showGraphModal conditional rendering from here */}
+
               <div
                 className={`legend-btn absolute bottom-6 right-6 ${
                   isDarkMode
                     ? "bg-gray-900 scrollbar-dark"
                     : "bg-white scrollbar-light"
-                }
-                ${legendVisible ? "p-4" : "p-[8px]"}
- shadow-lg rounded-lg p-4 border border-gray-300 max-h-64 overflow-y-auto`}
+                } ${
+                  legendVisible ? "p-4" : "p-[8px]"
+                } shadow-lg rounded-lg p-4 border border-gray-300 max-h-64 overflow-y-auto`}
               >
                 {legendVisible ? (
                   <div>
@@ -1951,12 +1976,11 @@ const App = () => {
                       </h3>
                       <button
                         onClick={() => setLegendVisible(false)}
-                        className={`absolute top-3 right-3 
-        p-1 rounded-full  ${
-          isDarkMode
-            ? "text-gray-300 hover:bg-gray-700"
-            : "text-gray-700 hover:bg-gray-200"
-        }`}
+                        className={`absolute top-3 right-3 p-1 rounded-full ${
+                          isDarkMode
+                            ? "text-gray-300 hover:bg-gray-700"
+                            : "text-gray-700 hover:bg-gray-200"
+                        }`}
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -1964,7 +1988,6 @@ const App = () => {
                     <ul>
                       {layers.map((item, index) => (
                         <li key={index} className="flex items-center mb-2">
-                          {/* Forme conditionnelle */}
                           {item.type === "polygone" && (
                             <span
                               className="w-4 h-4 inline-block mr-2"
@@ -1982,14 +2005,11 @@ const App = () => {
                           )}
                           {item.type === "point" && (
                             <img
-                              src={
-                                "https://static.thenounproject.com/png/265-512.png"
-                              }
+                              src="https://static.thenounproject.com/png/265-512.png"
                               alt="Point Icon"
                               className="w-4 h-4 inline-block mr-2"
                             />
                           )}
-
                           <span
                             className={`${
                               isDarkMode ? "text-white" : "text-black"
@@ -2063,7 +2083,7 @@ const App = () => {
                       </button>
                       <button
                         onClick={() => setLayersVisible(false)}
-                        className={`absolute top-3 right-3 
+                        className={`absolute top-3 right-3
         p-1 rounded-full ${
           isDarkMode
             ? "text-gray-300 hover:bg-gray-700"
@@ -2391,6 +2411,85 @@ const App = () => {
                               </div>
                             )}
                           </div>
+                          {/* Groupe land */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    activeLayers.midelt_P &&
+                                    activeLayers.errachidia_P
+                                  }
+                                  onChange={() => {
+                                    const newState = !(
+                                      activeLayers.midelt_P &&
+                                      activeLayers.errachidia_P
+                                    );
+                                    setActiveLayers({
+                                      ...activeLayers,
+                                      midelt_P: newState,
+                                      errachidia_P: newState,
+                                    });
+                                  }}
+                                  className="mr-2"
+                                />
+                                <button
+                                  onClick={() =>
+                                    setisLandExpanded(!isLandExpanded)
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.land}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setisLandExpanded(!isLandExpanded)
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isLandExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isLandExpanded && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.midelt_P}
+                                    onChange={() => toggleLayer("midelt_P")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer11}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.errachidia_P}
+                                    onChange={() => toggleLayer("errachidia_P")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer12}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ) : (
                         <div className="space-y-1">
@@ -2451,6 +2550,14 @@ const App = () => {
                 )}
               </div>
             </>
+          ) : currentPage === "graph" ? ( // Render GraphPage when currentPage is 'graph'
+            <GraphPage
+              language={language}
+              isDarkMode={isDarkMode}
+              onClose={() => setCurrentPage("map")}
+              isFirstGraphVisit={isFirstSiteVisit} // Pass the global site visit state
+              setIsFirstGraphVisit={setIsFirstSiteVisit} // Pass the setter // Go back to map when closed
+            />
           ) : (
             <div
               className={`relative flex flex-col items-center justify-center h-screen text-center ${
