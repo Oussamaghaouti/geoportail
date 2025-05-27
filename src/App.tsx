@@ -83,9 +83,9 @@ const App = () => {
   });
   const [currentPage, setCurrentPage] = useState("accueil"); // Can be "accueil", "map", "graph"
   const [activeLayers, setActiveLayers] = useState({
-    commune: true,
     province: false,
     region: false,
+    commune: false,
     routenationale: false,
     routeprovinciale: false,
     routeregionale: false,
@@ -343,6 +343,18 @@ const App = () => {
   const [dataWindowVisible, setDataWindowVisible] = useState(false);
   const [legendVisible, setLegendVisible] = useState(false);
   const [layersVisible, setLayersVisible] = useState(false);
+  const [allPanelsVisible, setAllPanelsVisible] = useState(false);
+  useEffect(() => {
+    setAllPanelsVisible(dataWindowVisible && legendVisible && layersVisible);
+  }, [dataWindowVisible, legendVisible, layersVisible]);
+  const toggleAllPanels = () => {
+    const newState = !allPanelsVisible;
+    setDataWindowVisible(newState);
+    setLegendVisible(newState);
+    setLayersVisible(newState);
+    setAllPanelsVisible(newState);
+    setIsExpanded(false);
+  };
   const [showTour, setShowTour] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [isFirstVisit, setIsFirstVisit] = useState(true);
@@ -576,7 +588,7 @@ const App = () => {
       type: "polygone",
     },
     {
-      color: "#25E610",
+      color: "#93ff8f",
       layer: "midelt_P",
       type: "polygone",
     },
@@ -1140,8 +1152,8 @@ const App = () => {
                 {activeLayers.midelt_P && (
                   <WMSTileLayer
                     //url="http://localhost:8080/geoserver/Midelt/wms"
-                    url="https://83ea-196-64-101-105.ngrok-free.app/geoserver/Midelt/wms"
-                    layers="Midelt:midelt"
+                    url="http://34.82.90.5:8080/geoserver/midelt/wms"
+                    layers="midelt:midelt"
                     format="image/png"
                     transparent={true}
                     opacity={0.7}
@@ -1152,7 +1164,7 @@ const App = () => {
                 {activeLayers.errachidia_P && (
                   <WMSTileLayer
                     //url="http://localhost:8080/geoserver/Errachidia/wms"
-                    url="https://83ea-196-64-101-105.ngrok-free.app/geoserver/Errachidia/wms"
+                    url="http://34.82.90.5:8080/geoserver/Errachidia/wms"
                     layers="Errachidia:Errachidia"
                     format="image/png"
                     transparent={true}
@@ -2095,21 +2107,21 @@ const App = () => {
                                 <input
                                   type="checkbox"
                                   checked={
+                                    activeLayers.commune &&
                                     activeLayers.region &&
-                                    activeLayers.province &&
-                                    activeLayers.commune
+                                    activeLayers.province
                                   }
                                   onChange={() => {
                                     const newState = !(
+                                      activeLayers.commune &&
                                       activeLayers.region &&
-                                      activeLayers.province &&
-                                      activeLayers.commune
+                                      activeLayers.province
                                     );
                                     setActiveLayers({
                                       ...activeLayers,
+                                      commune: newState,
                                       region: newState,
                                       province: newState,
-                                      commune: newState,
                                     });
                                   }}
                                   className="mr-2"
@@ -2140,8 +2152,8 @@ const App = () => {
                                 <div className="flex items-center">
                                   <input
                                     type="checkbox"
-                                    checked={activeLayers.region}
-                                    onChange={() => toggleLayer("region")}
+                                    checked={activeLayers.commune}
+                                    onChange={() => toggleLayer("commune")}
                                     className="mr-2"
                                   />
                                   <label
@@ -2149,7 +2161,7 @@ const App = () => {
                                       isDarkMode ? "text-white" : "text-black"
                                     }`}
                                   >
-                                    {t.layer1}
+                                    {t.layer3}
                                   </label>
                                 </div>
                                 <div className="flex items-center">
@@ -2170,8 +2182,8 @@ const App = () => {
                                 <div className="flex items-center">
                                   <input
                                     type="checkbox"
-                                    checked={activeLayers.commune}
-                                    onChange={() => toggleLayer("commune")}
+                                    checked={activeLayers.region}
+                                    onChange={() => toggleLayer("region")}
                                     className="mr-2"
                                   />
                                   <label
@@ -2179,7 +2191,7 @@ const App = () => {
                                       isDarkMode ? "text-white" : "text-black"
                                     }`}
                                   >
-                                    {t.layer3}
+                                    {t.layer1}
                                   </label>
                                 </div>
                               </div>
@@ -2542,6 +2554,24 @@ const App = () => {
                   </div>
                 )}
               </div>
+              <button
+                onClick={toggleAllPanels}
+                className={`
+                   absolute bottom-6 right-1/3 transform -translate-x-1/2
+                   p-2 rounded-lg shadow-lg z-20 /* Petits padding et border-radius */
+                   text-base font-semibold /* Taille de texte réduite, moins de gras */
+                   ${
+                     isDarkMode
+                       ? "bg-gray-800 hover:bg-gray-700 text-blue-300"
+                       : "bg-gray-200 hover:bg-gray-300 text-blue-700"
+                   }
+                   ${isNavOpen ? "right-1/3" : "right-[570px]"}
+                  transition-all duration-300 ease-in-out
+                   flex items-center 
+                 `}
+              >
+                {allPanelsVisible ? t.closeAllPanels : t.showAllPanels}
+              </button>
             </>
           ) : currentPage === "graph" ? ( // Render GraphPage when currentPage is 'graph'
             <GraphPage

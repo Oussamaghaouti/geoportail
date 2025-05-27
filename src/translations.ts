@@ -434,6 +434,8 @@ homeTourMapBtnContent: "Cliquez ici pour accéder à l'interface cartographique 
     graphSimpleTourTitle: "Bienvenue sur la page des graphiques !",
     graphSimpleTourContent: "Cette section vous permet de visualiser et comparer les données de recensement des communes. Sélectionnez une catégorie, puis un indicateur, et choisissez les communes à analyser.",
     okBtn: "OK",
+    showAllPanels: "Afficher tout", 
+    closeAllPanels: "Fermer tout",  
 
   },
   en: {
@@ -869,6 +871,8 @@ valeurs:"Values",
     graphSimpleTourTitle: "Welcome to the Graph Page!",
     graphSimpleTourContent: "This section allows you to visualize and compare census data for communes. Select a category, then an indicator, and choose communes to analyze.",
     okBtn: "OK",
+    showAllPanels: "Show All",    
+    closeAllPanels: "Close All", 
 
   },
   ar: {
@@ -1306,6 +1310,8 @@ valeurs:"قيم",
     graphSimpleTourTitle: "مرحباً بك في صفحة الرسوم البيانية!",
     graphSimpleTourContent: "يتيح لك هذا القسم عرض ومقارنة بيانات الإحصاء للجماعات. اختر فئة، ثم مؤشرًا، واختر الجماعات لتحليلها.",
     okBtn: "موافق", 
+    showAllPanels: "إظهار الكل", 
+    closeAllPanels: "إغلاق الكل", 
 
   },
 }
