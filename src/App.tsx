@@ -1147,11 +1147,6 @@ const App = () => {
                     opacity={0.7}
                     version="1.1.0"
                     attribution="© Données cadastrales Midelt"
-                    tileSize={256}
-                    crossOrigin="anonymous"
-                    params={{
-                      "ngrok-skip-browser-warning": "true",
-                    }}
                   />
                 )}
                 {activeLayers.errachidia_P && (
@@ -1164,11 +1159,6 @@ const App = () => {
                     opacity={0.7}
                     version="1.1.0"
                     attribution="© Données cadastrales Errachidia"
-                    tileSize={256}
-                    crossOrigin="anonymous"
-                    params={{
-                      "ngrok-skip-browser-warning": "true",
-                    }}
                   />
                 )}
                 <MapZoomHandler
