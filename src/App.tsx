@@ -83,7 +83,7 @@ const App = () => {
   });
   const [currentPage, setCurrentPage] = useState("accueil"); // Can be "accueil", "map", "graph"
   const [activeLayers, setActiveLayers] = useState({
-    commune: false,
+    commune: true,
     province: false,
     region: false,
     routenationale: false,
@@ -200,15 +200,6 @@ const App = () => {
     };
   }, [showDownloadOptions]);
 
-  // Removed graph-related states here. They are now in GraphPage.tsx
-  // const [showGraphModal, setShowGraphModal] = useState(false);
-  // const [selectedGraphCategory, setSelectedGraphCategory] = useState<string>("");
-  // const [selectedGraphIndicator, setSelectedGraphIndicator] = useState<string>("");
-  // const [selectedCommunes, setSelectedCommunes] = useState<string[]>([]);
-  // const chartRef = useRef<HTMLCanvasElement | null>(null);
-  // const chartInstanceRef = useRef<Chart | null>(null);
-
-  // Data categories are still needed here for the data display window
   const dataCategories = {
     Demography: [
       "pop2024",
@@ -1148,7 +1139,8 @@ const App = () => {
                 />
                 {activeLayers.midelt_P && (
                   <WMSTileLayer
-                    url="http://localhost:8080/geoserver/Midelt/wms"
+                    //url="http://localhost:8080/geoserver/Midelt/wms"
+                    url="https://83ea-196-64-101-105.ngrok-free.app/geoserver/Midelt/wms"
                     layers="Midelt:midelt"
                     format="image/png"
                     transparent={true}
@@ -1159,7 +1151,8 @@ const App = () => {
                 )}
                 {activeLayers.errachidia_P && (
                   <WMSTileLayer
-                    url="http://localhost:8080/geoserver/Errachidia/wms"
+                    //url="http://localhost:8080/geoserver/Errachidia/wms"
+                    url="https://83ea-196-64-101-105.ngrok-free.app/geoserver/Errachidia/wms"
                     layers="Errachidia:Errachidia"
                     format="image/png"
                     transparent={true}
