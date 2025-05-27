@@ -344,7 +344,7 @@ const GraphPage: React.FC<GraphPageProps> = ({
         <div className="fixed inset-0 bg-black/50 z-[9998] flex items-center justify-center">
           <div
             className={`
-              p-8 rounded-xl shadow-2xl text-center
+              p-8 rounded-xl shadow-2xl text-center max-w-md
               ${
                 isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"
               }
