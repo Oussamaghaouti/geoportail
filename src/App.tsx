@@ -148,6 +148,7 @@ const App = () => {
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [shouldZoom, setShouldZoom] = useState(false);
   const [showNgrokNotice, setShowNgrokNotice] = useState(false);
+  const [hasShownNgrokNotice, setHasShownNgrokNotice] = useState(false);
 
   const MapZoomHandler = ({ selectedFeature }) => {
     const map = useMap();
@@ -528,10 +529,14 @@ const App = () => {
     setIsDarkMode(!isDarkMode);
   };
   useEffect(() => {
-    if (activeLayers.midelt_P || activeLayers.errachidia_P) {
+    if (
+      (activeLayers.midelt_P || activeLayers.errachidia_P) &&
+      !hasShownNgrokNotice
+    ) {
       setShowNgrokNotice(true);
+      setHasShownNgrokNotice(true);
     }
-  }, [activeLayers.midelt_P, activeLayers.errachidia_P]);
+  }, [activeLayers.midelt_P, activeLayers.errachidia_P, hasShownNgrokNotice]);
 
   const toggleLayer = (layer: string) => {
     setActiveLayers((prevState) => ({
@@ -2055,20 +2060,15 @@ const App = () => {
                   exit={{ y: -100, opacity: 0 }}
                   transition={{ duration: 0.5 }}
                   className={`
-                     absolute top-0 left-0 right-0 z-50 p-4 text-center
-                     ${
-                       isDarkMode
-                         ? "bg-yellow-800 text-white"
-                         : "bg-yellow-200 text-gray-800"
-                     }
-                     shadow-lg flex items-center justify-between
-                   `}
+      absolute top-0 left-0 right-0 z-50 p-4 text-center
+      ${isDarkMode ? "bg-yellow-800 text-white" : "bg-yellow-200 text-gray-800"}
+      shadow-lg flex items-center justify-between
+    `}
                 >
                   <p className="flex-grow text-sm md:text-base">
-                    {/* Utilisez t.ngrokWarningPart1 pour la première partie du message */}
                     {t.ngrokWarningPart1}{" "}
                     <a
-                      href="https://7f73-34-82-90-5.ngrok-free.app" // L'URL de votre tunnel ngrok
+                      href="https://7f73-34-82-90-5.ngrok-free.app"
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`${
@@ -2077,10 +2077,8 @@ const App = () => {
                           : "text-blue-700 hover:text-blue-900"
                       } underline font-semibold`}
                     >
-                      {/* Utilisez t.ngrokWarningLinkText pour le texte du lien */}
                       {t.ngrokWarningLinkText}
                     </a>{" "}
-                    {/* Utilisez t.ngrokWarningPart2 pour la deuxième partie du message */}
                     {t.ngrokWarningPart2}
                   </p>
                   <button
