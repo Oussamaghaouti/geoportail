@@ -1164,7 +1164,7 @@ const App = () => {
                 />
                 {activeLayers.midelt_P && (
                   <WMSTileLayer
-                    url="https://7f73-34-82-90-5.ngrok-free.app/geoserver/midelt/wms"
+                    url="https://42f3-34-82-90-5.ngrok-free.app/geoserver/midelt/wms"
                     layers="midelt:midelt"
                     format="image/png"
                     transparent={true}
@@ -1176,7 +1176,7 @@ const App = () => {
 
                 {activeLayers.errachidia_P && (
                   <WMSTileLayer
-                    url="https://7f73-34-82-90-5.ngrok-free.app/geoserver/Errachidia/wms"
+                    url="https://42f3-34-82-90-5.ngrok-free.app/geoserver/Errachidia/wms"
                     layers="Errachidia:Errachidia"
                     format="image/png"
                     transparent={true}
@@ -2068,7 +2068,7 @@ const App = () => {
                   <p className="flex-grow text-sm md:text-base">
                     {t.ngrokWarningPart1}{" "}
                     <a
-                      href="https://7f73-34-82-90-5.ngrok-free.app"
+                      href="https://42f3-34-82-90-5.ngrok-free.app"
                       target="_blank"
                       rel="noopener noreferrer"
                       className={`${
