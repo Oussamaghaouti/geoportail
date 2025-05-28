@@ -2050,51 +2050,26 @@ const App = () => {
                 )}
               </div>
               {showNgrokNotice && (
-                <motion.div
-                  initial={{ y: -100, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -100, opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className={`
-                     absolute top-0 left-0 right-0 z-50 p-4 text-center
-                     ${
-                       isDarkMode
-                         ? "bg-yellow-800 text-white"
-                         : "bg-yellow-200 text-gray-800"
-                     }
-                     shadow-lg flex items-center justify-between
-                   `}
-                >
-                  <p className="flex-grow text-sm md:text-base">
-                    {/* Utilisez t.ngrokWarningPart1 pour la première partie du message */}
-                    {t.ngrokWarningPart1}{" "}
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-yellow-100 border border-yellow-400 text-yellow-800 px-6 py-3 rounded shadow-lg flex items-center justify-between w-[90%] max-w-xl">
+                  <span>
+                    {t.ngrokWarningLinkText}{" "}
                     <a
-                      href="https://7f73-34-82-90-5.ngrok-free.app" // L'URL de votre tunnel ngrok
+                      href="https://7f73-34-82-90-5.ngrok-free.app"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`${
-                        isDarkMode
-                          ? "text-yellow-300 hover:text-yellow-100"
-                          : "text-blue-700 hover:text-blue-900"
-                      } underline font-semibold`}
+                      className="underline text-blue-600"
                     >
-                      {/* Utilisez t.ngrokWarningLinkText pour le texte du lien */}
                       {t.ngrokWarningLinkText}
                     </a>{" "}
-                    {/* Utilisez t.ngrokWarningPart2 pour la deuxième partie du message */}
                     {t.ngrokWarningPart2}
-                  </p>
+                  </span>
                   <button
                     onClick={() => setShowNgrokNotice(false)}
-                    className={`ml-4 p-1 rounded-full ${
-                      isDarkMode
-                        ? "text-white hover:bg-yellow-700"
-                        : "text-gray-800 hover:bg-yellow-300"
-                    }`}
+                    className="ml-4 text-sm font-bold"
                   >
-                    <X size={20} />
+                    ✕
                   </button>
-                </motion.div>
+                </div>
               )}
 
               {/* Fenêtre de Contrôle des Couches */}
