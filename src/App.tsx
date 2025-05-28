@@ -147,6 +147,7 @@ const App = () => {
   };
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [shouldZoom, setShouldZoom] = useState(false);
+  const [showNgrokNotice, setShowNgrokNotice] = useState(false);
 
   const MapZoomHandler = ({ selectedFeature }) => {
     const map = useMap();
@@ -527,11 +528,19 @@ const App = () => {
     setIsDarkMode(!isDarkMode);
   };
   const toggleLayer = (layer: string) => {
+    if (
+      (layer === "midelt_P" || layer === "errachidia_P") &&
+      !activeLayers[layer]
+    ) {
+      setShowNgrokNotice(true);
+    }
+
     setActiveLayers((prevState) => ({
       ...prevState,
       [layer]: !prevState[layer],
     }));
   };
+
   const layers: {
     color: string;
     layer: string;
@@ -1151,8 +1160,7 @@ const App = () => {
                 />
                 {activeLayers.midelt_P && (
                   <WMSTileLayer
-                    //url="http://localhost:8080/geoserver/Midelt/wms"
-                    url="http://34.82.90.5:8080/geoserver/midelt/wms"
+                    url="https://7f73-34-82-90-5.ngrok-free.app/geoserver/midelt/wms"
                     layers="midelt:midelt"
                     format="image/png"
                     transparent={true}
@@ -1161,10 +1169,10 @@ const App = () => {
                     attribution="© Données cadastrales Midelt"
                   />
                 )}
+
                 {activeLayers.errachidia_P && (
                   <WMSTileLayer
-                    //url="http://localhost:8080/geoserver/Errachidia/wms"
-                    url="http://34.82.90.5:8080/geoserver/Errachidia/wms"
+                    url="https://7f73-34-82-90-5.ngrok-free.app/geoserver/Errachidia/wms"
                     layers="Errachidia:Errachidia"
                     format="image/png"
                     transparent={true}
@@ -1173,6 +1181,7 @@ const App = () => {
                     attribution="© Données cadastrales Errachidia"
                   />
                 )}
+
                 <MapZoomHandler
                   selectedFeature={selectedFeature}
                   shouldZoom={shouldZoom}
@@ -2040,6 +2049,54 @@ const App = () => {
                   </button>
                 )}
               </div>
+              {showNgrokNotice && (
+                <motion.div
+                  initial={{ y: -100, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -100, opacity: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className={`
+                     absolute top-0 left-0 right-0 z-50 p-4 text-center
+                     ${
+                       isDarkMode
+                         ? "bg-yellow-800 text-white"
+                         : "bg-yellow-200 text-gray-800"
+                     }
+                     shadow-lg flex items-center justify-between
+                   `}
+                >
+                  <p className="flex-grow text-sm md:text-base">
+                    {/* Utilisez t.ngrokWarningPart1 pour la première partie du message */}
+                    {t.ngrokWarningPart1}{" "}
+                    <a
+                      href="https://7f73-34-82-90-5.ngrok-free.app" // L'URL de votre tunnel ngrok
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`${
+                        isDarkMode
+                          ? "text-yellow-300 hover:text-yellow-100"
+                          : "text-blue-700 hover:text-blue-900"
+                      } underline font-semibold`}
+                    >
+                      {/* Utilisez t.ngrokWarningLinkText pour le texte du lien */}
+                      {t.ngrokWarningLinkText}
+                    </a>{" "}
+                    {/* Utilisez t.ngrokWarningPart2 pour la deuxième partie du message */}
+                    {t.ngrokWarningPart2}
+                  </p>
+                  <button
+                    onClick={() => setShowNgrokNotice(false)}
+                    className={`ml-4 p-1 rounded-full ${
+                      isDarkMode
+                        ? "text-white hover:bg-yellow-700"
+                        : "text-gray-800 hover:bg-yellow-300"
+                    }`}
+                  >
+                    <X size={20} />
+                  </button>
+                </motion.div>
+              )}
+
               {/* Fenêtre de Contrôle des Couches */}
               <div
                 className={`absolute bottom-8 transition-all duration-300 ease-in-out ${

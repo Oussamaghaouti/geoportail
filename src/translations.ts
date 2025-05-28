@@ -436,6 +436,9 @@ homeTourMapBtnContent: "Cliquez ici pour accéder à l'interface cartographique 
     okBtn: "OK",
     showAllPanels: "Afficher tout", 
     closeAllPanels: "Fermer tout",  
+    ngrokWarningPart1: "Pour afficher ces données, veuillez visiter",
+    ngrokWarningLinkText: "ce site",
+    ngrokWarningPart2: " et cliquer sur 'Visit Site'. Ensuite, revenez ici pour trouver vos données. Si les données s'affichent correctement, vous pouvez ignorer ce message.",
 
   },
   en: {
@@ -873,6 +876,9 @@ valeurs:"Values",
     okBtn: "OK",
     showAllPanels: "Show All",    
     closeAllPanels: "Close All", 
+    ngrokWarningPart1: "To display this data, please visit",
+    ngrokWarningLinkText: "this site",
+    ngrokWarningPart2: " and click 'Visit Site'. Then, return here to find your data. If the data is displaying correctly, you can ignore this message.",
 
   },
   ar: {
@@ -1312,6 +1318,9 @@ valeurs:"قيم",
     okBtn: "موافق", 
     showAllPanels: "إظهار الكل", 
     closeAllPanels: "إغلاق الكل", 
+    ngrokWarningPart1: "لعرض هذه البيانات، يرجى زيارة",
+    ngrokWarningLinkText: "هذا الموقع",
+    ngrokWarningPart2: " ثم النقر على زر 'زيارة الموقع'. بعد ذلك، ارجع هنا للعثور على بياناتك. إذا كانت البيانات تظهر بشكل صحيح، يمكنك تجاهل هذه الرسالة.",
 
   },
 }
