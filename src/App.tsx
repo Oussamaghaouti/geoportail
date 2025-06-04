@@ -95,6 +95,7 @@ const App = () => {
     nappe: false,
     midelt_P: false,
     errachidia_P: false,
+    pa1: false,
   });
   const barrageIcon = new L.Icon({
     iconUrl: "https://static.thenounproject.com/png/265-512.png",
@@ -145,10 +146,13 @@ const App = () => {
       .slice(0, 3);
     setSuggestions(results);
   };
+  const pa1LegendImageUrl = "src/legende_plan_amenagement_pa1.png";
+
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [shouldZoom, setShouldZoom] = useState(false);
   const [showNgrokNotice, setShowNgrokNotice] = useState(false);
   const [hasShownNgrokNotice, setHasShownNgrokNotice] = useState(false);
+  const [showPa1FloatingLegend, setShowPa1FloatingLegend] = useState(false);
 
   const MapZoomHandler = ({ selectedFeature }) => {
     const map = useMap();
@@ -530,19 +534,70 @@ const App = () => {
   };
   useEffect(() => {
     if (
-      (activeLayers.midelt_P || activeLayers.errachidia_P) &&
+      (activeLayers.midelt_P ||
+        activeLayers.errachidia_P ||
+        activeLayers.pa1) &&
       !hasShownNgrokNotice
     ) {
       setShowNgrokNotice(true);
       setHasShownNgrokNotice(true);
     }
-  }, [activeLayers.midelt_P, activeLayers.errachidia_P, hasShownNgrokNotice]);
+  }, [
+    activeLayers.midelt_P,
+    activeLayers.errachidia_P,
+    activeLayers.pa1,
+    hasShownNgrokNotice,
+  ]);
+  const LAYER_BOUNDS = {
+    // commune: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // province: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // region: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+
+    // midelt_P: L.latLngBounds([32.5, -5.0], [32.8, -4.5]),
+    // errachidia_P: L.latLngBounds([31.0, -4.8], [31.5, -4.2]),
+    pa1: L.latLngBounds([31.93452, -4.43151], [31.92356, -4.41578]),
+
+    // routenationale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // routeprovinciale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // routeregionale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // barrage: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // bassin: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // oued: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+    // nappe: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
+  };
+  const MapLayerZoomer = ({ activeLayerName, setLayerZoomed }) => {
+    const map = useMap(); // Accède à l'instance de la carte Leaflet
+
+    useEffect(() => {
+      if (activeLayerName && LAYER_BOUNDS[activeLayerName]) {
+        const bounds = LAYER_BOUNDS[activeLayerName];
+        map.flyToBounds(bounds, { padding: [50, 50] });
+        setLayerZoomed(true); // Indique que le zoom a été effectué
+      }
+    }, [activeLayerName, map, setLayerZoomed]);
+
+    return null; // Ce composant ne rend rien visuellement
+  };
+  const [layerToZoom, setLayerToZoom] = useState<string | null>(null);
 
   const toggleLayer = (layer: string) => {
-    setActiveLayers((prevState) => ({
-      ...prevState,
-      [layer]: !prevState[layer],
-    }));
+    setActiveLayers((prevState) => {
+      const newState = {
+        ...prevState,
+        [layer]: !prevState[layer],
+      };
+
+      if (newState[layer] === true) {
+        setLayerToZoom(layer);
+      } else {
+        setLayerToZoom(null);
+      }
+      if (layer === "pa1") {
+        setShowPa1FloatingLegend(newState[layer]);
+      }
+
+      return newState;
+    });
   };
 
   const layers: {
@@ -629,6 +684,7 @@ const App = () => {
   const [isRoadExpanded, setIsRoadExpanded] = useState(false);
   const [isHydroExpanded, setIsHydroExpanded] = useState(false);
   const [isLandExpanded, setisLandExpanded] = useState(false);
+  const [isPAExpanded, setisPAExpanded] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const toggleExpand = () => {
     setIsExpanded((prev) => !prev);
@@ -1118,6 +1174,49 @@ const App = () => {
           {/* This div needs to manage its background based on content */}
           {currentPage === "map" ? (
             <>
+              {showPa1FloatingLegend && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                  className={`
+                     absolute top-24 right-4 z-40 p-4 rounded-lg shadow-lg
+                     ${
+                       isDarkMode
+                         ? "bg-gray-900 text-white"
+                         : "bg-white text-black"
+                     }
+                     max-w-[290px] max-h-[80vh] overflow-y-auto scrollbar-thin
+                     ${isDarkMode ? "scrollbar-dark" : "scrollbar-light"}
+                   `}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3
+                      className={`font-bold text-lg ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {t.pa1LegendAltText}
+                    </h3>
+                    <button
+                      onClick={() => setShowPa1FloatingLegend(false)}
+                      className={`p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <img
+                    src={pa1LegendImageUrl}
+                    alt={t.pa1LegendAltText}
+                    className="max-w-full h-auto"
+                  />
+                </motion.div>
+              )}
               <div className="search-control absolute top-24 right-4 z-10">
                 <div className="relative">
                   <input
@@ -1157,11 +1256,17 @@ const App = () => {
                 center={position}
                 zoom={7}
                 style={{ height: "100%", width: "100%" }}
+                id="main-map"
               >
                 <TileLayer
                   url={baseMaps[baseMap].url}
                   attribution={baseMaps[baseMap].attribution}
                 />
+                <MapLayerZoomer
+                  activeLayerName={layerToZoom}
+                  setLayerZoomed={() => setLayerToZoom(null)}
+                />
+
                 {activeLayers.midelt_P && (
                   <WMSTileLayer
                     url="https://42f3-34-82-90-5.ngrok-free.app/geoserver/midelt/wms"
@@ -1183,6 +1288,29 @@ const App = () => {
                     opacity={0.7}
                     version="1.1.0"
                     attribution="© Données cadastrales Errachidia"
+                  />
+                )}
+                {activeLayers.pa1 && ( // Assurez-vous d'avoir cet état dans activeLayers
+                  <WMSTileLayer
+                    url="https://42f3-34-82-90-5.ngrok-free.app/geoserver/Errachidia/wms" // URL de base de votre GeoServer avec le Workspace PlansCadastre
+                    layers="Errachidia:poly_pa1" // Nom exact de la couche publiée dans GeoServer
+                    format="image/png"
+                    transparent={true}
+                    opacity={0.7}
+                    version="1.1.0"
+                    attribution="© Plan d'aménagement"
+                  />
+                )}
+                {/* Couche WMS ligne_pa1 */}
+                {activeLayers.pa1 && ( // Assurez-vous d'avoir cet état dans activeLayers
+                  <WMSTileLayer
+                    url="https://42f3-34-82-90-5.ngrok-free.app/geoserver/Errachidia/wms" // URL de base de votre GeoServer avec le Workspace PlansCadastre
+                    layers="Errachidia:ligne_pa1" // Nom exact de la couche publiée dans GeoServer
+                    format="image/png"
+                    transparent={true}
+                    opacity={0.7}
+                    version="1.1.0"
+                    attribution=""
                   />
                 )}
 
@@ -2158,28 +2286,6 @@ const App = () => {
                           <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    activeLayers.commune &&
-                                    activeLayers.region &&
-                                    activeLayers.province
-                                  }
-                                  onChange={() => {
-                                    const newState = !(
-                                      activeLayers.commune &&
-                                      activeLayers.region &&
-                                      activeLayers.province
-                                    );
-                                    setActiveLayers({
-                                      ...activeLayers,
-                                      commune: newState,
-                                      region: newState,
-                                      province: newState,
-                                    });
-                                  }}
-                                  className="mr-2"
-                                />
                                 <button
                                   onClick={() =>
                                     setIsAdminExpanded(!isAdminExpanded)
@@ -2256,28 +2362,6 @@ const App = () => {
                           <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    activeLayers.routenationale &&
-                                    activeLayers.routeregionale &&
-                                    activeLayers.routeprovinciale
-                                  }
-                                  onChange={() => {
-                                    const newState = !(
-                                      activeLayers.routenationale &&
-                                      activeLayers.routeregionale &&
-                                      activeLayers.routeprovinciale
-                                    );
-                                    setActiveLayers({
-                                      ...activeLayers,
-                                      routenationale: newState,
-                                      routeregionale: newState,
-                                      routeprovinciale: newState,
-                                    });
-                                  }}
-                                  className="mr-2"
-                                />
                                 <button
                                   onClick={() =>
                                     setIsRoadExpanded(!isRoadExpanded)
@@ -2359,31 +2443,6 @@ const App = () => {
                           <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    activeLayers.barrage &&
-                                    activeLayers.bassin &&
-                                    activeLayers.oued &&
-                                    activeLayers.nappe
-                                  }
-                                  onChange={() => {
-                                    const newState = !(
-                                      activeLayers.barrage &&
-                                      activeLayers.bassin &&
-                                      activeLayers.oued &&
-                                      activeLayers.nappe
-                                    );
-                                    setActiveLayers({
-                                      ...activeLayers,
-                                      barrage: newState,
-                                      bassin: newState,
-                                      oued: newState,
-                                      nappe: newState,
-                                    });
-                                  }}
-                                  className="mr-2"
-                                />
                                 <button
                                   onClick={() =>
                                     setIsHydroExpanded(!isHydroExpanded)
@@ -2474,25 +2533,6 @@ const App = () => {
                           <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  checked={
-                                    activeLayers.midelt_P &&
-                                    activeLayers.errachidia_P
-                                  }
-                                  onChange={() => {
-                                    const newState = !(
-                                      activeLayers.midelt_P &&
-                                      activeLayers.errachidia_P
-                                    );
-                                    setActiveLayers({
-                                      ...activeLayers,
-                                      midelt_P: newState,
-                                      errachidia_P: newState,
-                                    });
-                                  }}
-                                  className="mr-2"
-                                />
                                 <button
                                   onClick={() =>
                                     setisLandExpanded(!isLandExpanded)
@@ -2519,6 +2559,21 @@ const App = () => {
                                 <div className="flex items-center">
                                   <input
                                     type="checkbox"
+                                    checked={activeLayers.errachidia_P}
+                                    onChange={() => toggleLayer("errachidia_P")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.layer12}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
                                     checked={activeLayers.midelt_P}
                                     onChange={() => toggleLayer("midelt_P")}
                                     className="mr-2"
@@ -2531,11 +2586,37 @@ const App = () => {
                                     {t.layer11}
                                   </label>
                                 </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Groupe pa */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() => setisPAExpanded(!isPAExpanded)}
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.PA}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() => setisPAExpanded(!isPAExpanded)}
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isPAExpanded ? "rotate-180" : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isPAExpanded && (
+                              <div className="ml-4 mt-2 space-y-2">
                                 <div className="flex items-center">
                                   <input
                                     type="checkbox"
-                                    checked={activeLayers.errachidia_P}
-                                    onChange={() => toggleLayer("errachidia_P")}
+                                    checked={activeLayers.pa1}
+                                    onChange={() => toggleLayer("pa1")}
                                     className="mr-2"
                                   />
                                   <label
@@ -2543,7 +2624,7 @@ const App = () => {
                                       isDarkMode ? "text-white" : "text-black"
                                     }`}
                                   >
-                                    {t.layer12}
+                                    {t.PA1}
                                   </label>
                                 </div>
                               </div>
