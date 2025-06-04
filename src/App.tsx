@@ -146,7 +146,7 @@ const App = () => {
       .slice(0, 3);
     setSuggestions(results);
   };
-  const pa1LegendImageUrl = "src/legende_plan_amenagement_pa1.png";
+  const pa1LegendImageUrl = "/images/legende_plan_amenagement_pa1.png";
 
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [shouldZoom, setShouldZoom] = useState(false);
