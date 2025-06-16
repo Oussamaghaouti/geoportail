@@ -443,6 +443,32 @@ homeTourMapBtnContent: "Cliquez ici pour accéder à l'interface cartographique 
 PA1 : "Plan d'aménagement du centre de la municipalité d'Errachdia (Secteur Sud Est)",
 pa1LegendTitle: "Légende du Plan d'Aménagement", 
 pa1LegendAltText: "Légende du plan d'aménagement d'Errachdia", 
+proximityMaps: "Cartes de Proximité",
+    viabilityMaps: "Cartes de Viabilité",
+    elevationMaps: "Cartes d'Altitude/Pente",
+    
+    // Termes pour les couches spécifiques
+    prox_bat: "Proximité aux Bâtiments",
+    prox_route: "Proximité aux Routes",
+    prox_eq: "Proximité aux Équipements",
+    class_viabl: "Classes de Viabilité",
+    ind_viabl: "Indice de Viabilité",
+    mnt: "Modèle Numérique de Terrain",
+    pente: "Carte de Pente",
+    
+    // Termes utilisés dans les ImageOverlay
+    layer_class_viabl: "Classes de viabilité du terrain",
+    layer_ind_viabl: "Indice de viabilité du terrain",
+    layer_prox_bat: "Proximité aux bâtiments existants",
+    layer_mnt: "Modèle numérique de terrain",
+    layer_pente: "Pente du terrain",
+    layer_prox_route: "Proximité au réseau routier",
+    layer_prox_eq: "Proximité aux équipements publics",
+    
+    prediction_source_attribution: "Source: Analyse géospatiale 2023",
+    cn: "Courbes de niveau",
+
+    
 
   },
   en: {
@@ -887,6 +913,31 @@ valeurs:"Values",
 PA1 : "Development Plan for the center of the municipality of Errachdia (Southeast Sector)",
 pa1LegendTitle: "Development Plan Legend",
     pa1LegendAltText: "Legend for Errachdia Development Plan",
+    proximityMaps: "Proximity Maps",
+    viabilityMaps: "Viability Maps",
+    elevationMaps: "Elevation/Slope Maps",
+    
+    // Termes pour les couches spécifiques
+    prox_bat: "Building Proximity",
+    prox_route: "Road Proximity",
+    prox_eq: "Facility Proximity",
+    class_viabl: "Viability Classes",
+    ind_viabl: "Viability Index",
+    mnt: "Digital Terrain Model",
+    pente: "Slope Map",
+    
+    // Termes utilisés dans les ImageOverlay
+    layer_class_viabl: "Land viability classes",
+    layer_ind_viabl: "Land viability index",
+    layer_prox_bat: "Proximity to existing buildings",
+    layer_mnt: "Digital terrain model",
+    layer_pente: "Terrain slope",
+    layer_prox_route: "Proximity to road network",
+    layer_prox_eq: "Proximity to public facilities",
+    
+    prediction_source_attribution: "Source: Geospatial analysis 2023",
+    cn: "Contour lines",
+
 
   },
   ar: {
@@ -1333,6 +1384,30 @@ valeurs:"قيم",
 PA1 : "تصميم تهيئة مركز بلدية الرشيدية (القطاع الجنوبي الشرقي)",
 pa1LegendTitle: "مفتاح خريطة تصميم التهيئة",
     pa1LegendAltText: "مفتاح خريطة تصميم تهيئة الرشيدية",
+    proximityMaps: "خرائط القرب",
+    viabilityMaps: "خرائط الجدوى",
+    elevationMaps: "خرائط الارتفاع/المنحدر",
+    
+    // Termes pour les couches spécifiques
+    prox_bat: "القرب من المباني",
+    prox_route: "القرب من الطرق",
+    prox_eq: "القرب من المرافق",
+    class_viabl: "فئات الجدوى",
+    ind_viabl: "مؤشر الجدوى",
+    mnt: "النموذج الرقمي للتضاريس",
+    pente: "خريطة المنحدر",
+    
+    // Termes utilisés dans les ImageOverlay
+    layer_class_viabl: "فئات جدوى الأرض",
+    layer_ind_viabl: "مؤشر جدوى الأرض",
+    layer_prox_bat: "القرب من المباني الموجودة",
+    layer_mnt: "النموذج الرقمي للتضاريس",
+    layer_pente: "انحدار التضاريس",
+    layer_prox_route: "القرب من شبكة الطرق",
+    layer_prox_eq: "القرب من المرافق العامة",
+    
+    prediction_source_attribution: "المصدر: التحليل الجغرافي المكاني 2023",
+    cn: "خطوط الارتفاع",
 
   },
 }

@@ -32,6 +32,7 @@ import {
   Polyline,
   Popup,
   Marker,
+  ImageOverlay,
 } from "react-leaflet";
 import {
   Menu,
@@ -96,7 +97,56 @@ const App = () => {
     midelt_P: false,
     errachidia_P: false,
     pa1: false,
+    class_viabl: false,
+    ind_viabl: false,
+    prox_bat: false,
+    mnt: false,
+    pente: false,
+    prox_route: false,
+    prox_eq: false,
+    cn: true,
   });
+  const [isPredictionExpanded, setIsPredictionExpanded] = useState({
+    proximity: false,
+    viability: false,
+    elevation: false,
+  });
+  const predictionImageUrl = "/images/viability_classes1.png";
+  const predictionImageBounds = L.latLngBounds(
+    [31.9006944439999991, -4.4670833329999997],
+    [31.9504166669999989, -4.3970833330000003]
+  );
+  const predictionImageUrl1 = "/images/indice_viab.png";
+  const predictionImageBounds1 = L.latLngBounds(
+    [31.9006944439999991, -4.4670833329999997],
+    [31.9504166669999989, -4.3970833330000003]
+  );
+  const predictionImageUrl2 = "/images/prox_bat.png";
+  const predictionImageBounds2 = L.latLngBounds(
+    [31.900490241, -4.4706480449999999],
+    [31.9551482789999994, -4.3970247130000004]
+  );
+  const predictionImageUrl3 = "/images/mnt.png";
+  const predictionImageBounds3 = L.latLngBounds(
+    [31.9006944439999991, -4.4670833329999997],
+    [31.9504166669999989, -4.3970833330000003]
+  );
+  const predictionImageUrl4 = "/images/pente.png";
+  const predictionImageBounds4 = L.latLngBounds(
+    [31.9006944439999991, -4.4670833329999997],
+    [31.9504166669999989, -4.3970833330000003]
+  );
+  const predictionImageUrl5 = "/images/prox_route.png";
+  const predictionImageBounds5 = L.latLngBounds(
+    [31.900490241, -4.4668999999999999],
+    [31.9501482820000007, -4.3969814789999999]
+  );
+  const predictionImageUrl6 = "/images/prox_eq.png";
+  const predictionImageBounds6 = L.latLngBounds(
+    [31.900490241, -4.4668999999999999],
+    [31.9501482820000007, -4.3969814789999999]
+  );
+
   const barrageIcon = new L.Icon({
     iconUrl: "https://static.thenounproject.com/png/265-512.png",
     iconSize: [32, 32],
@@ -556,6 +606,38 @@ const App = () => {
     // midelt_P: L.latLngBounds([32.5, -5.0], [32.8, -4.5]),
     // errachidia_P: L.latLngBounds([31.0, -4.8], [31.5, -4.2]),
     pa1: L.latLngBounds([31.93452, -4.43151], [31.92356, -4.41578]),
+    class_viabl: L.latLngBounds(
+      [31.9006944439999991, -4.4670833329999997],
+      [31.9504166669999989, -4.3970833330000003]
+    ),
+    ind_viabl: L.latLngBounds(
+      [31.9006944439999991, -4.4670833329999997],
+      [31.9504166669999989, -4.3970833330000003]
+    ),
+    prox_bat: L.latLngBounds(
+      [31.900490241, -4.4706480449999999],
+      [31.9551482789999994, -4.3970247130000004]
+    ),
+    mnt: L.latLngBounds(
+      [31.9006944439999991, -4.4670833329999997],
+      [31.9504166669999989, -4.3970833330000003]
+    ),
+    pente: L.latLngBounds(
+      [31.9006944439999991, -4.4670833329999997],
+      [31.9504166669999989, -4.3970833330000003]
+    ),
+    prox_route: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    prox_eq: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    cn: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
 
     // routenationale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
     // routeprovinciale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
@@ -664,6 +746,11 @@ const App = () => {
       color: "#EE00FF",
       layer: "errachidia_P",
       type: "polygone",
+    },
+    {
+      color: "#9e9824",
+      layer: "cn",
+      type: "polyline",
     },
   ];
   const changeLanguage = () => {
@@ -1312,6 +1399,125 @@ const App = () => {
                     version="1.1.0"
                     attribution=""
                   />
+                )}
+                {activeLayers.class_viabl && (
+                  <ImageOverlay
+                    url={predictionImageUrl} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.ind_viabl && (
+                  <ImageOverlay
+                    url={predictionImageUrl1} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds1} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.prox_bat && (
+                  <ImageOverlay
+                    url={predictionImageUrl2} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds2} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.mnt && (
+                  <ImageOverlay
+                    url={predictionImageUrl3} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds3} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.pente && (
+                  <ImageOverlay
+                    url={predictionImageUrl4} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds4} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.prox_route && (
+                  <ImageOverlay
+                    url={predictionImageUrl5} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds5} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
+                )}
+                {activeLayers.prox_eq && (
+                  <ImageOverlay
+                    url={predictionImageUrl6} // L'URL de votre image locale (dans public/)
+                    bounds={predictionImageBounds6} // Les bornes géographiques de l'image (Lat/Lng)
+                    opacity={1} // Opacité de la couche (0.0 à 1.0)
+                    zIndex={10} // Ordre de superposition (plus le zIndex est élevé, plus la couche est au-dessus)
+                  >
+                    {/* Vous pouvez ajouter un Popup si l'utilisateur clique sur l'image */}
+                    <Popup>
+                      <div className="font-semibold">
+                        {t.layer_class_viabl} <br />
+                        {t.prediction_source_attribution}{" "}
+                        {/* Attribution/source si vous avez une traduction pour ça */}
+                      </div>
+                    </Popup>
+                  </ImageOverlay>
                 )}
 
                 <MapZoomHandler
@@ -2625,6 +2831,242 @@ const App = () => {
                                     }`}
                                   >
                                     {t.PA1}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Groupe Cartes de Prédiction */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() =>
+                                    setIsPredictionExpanded((prev) => ({
+                                      ...prev,
+                                      proximity: !prev.proximity,
+                                    }))
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.proximityMaps}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsPredictionExpanded((prev) => ({
+                                    ...prev,
+                                    proximity: !prev.proximity,
+                                  }))
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isPredictionExpanded.proximity
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isPredictionExpanded.proximity && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.prox_bat}
+                                    onChange={() => toggleLayer("prox_bat")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.prox_bat}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.prox_route}
+                                    onChange={() => toggleLayer("prox_route")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.prox_route}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.prox_eq}
+                                    onChange={() => toggleLayer("prox_eq")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.prox_eq}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Groupe Cartes d'Altitude/Pente */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() =>
+                                    setIsPredictionExpanded((prev) => ({
+                                      ...prev,
+                                      elevation: !prev.elevation,
+                                    }))
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.elevationMaps}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsPredictionExpanded((prev) => ({
+                                    ...prev,
+                                    elevation: !prev.elevation,
+                                  }))
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isPredictionExpanded.elevation
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isPredictionExpanded.elevation && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.mnt}
+                                    onChange={() => toggleLayer("mnt")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.mnt}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.pente}
+                                    onChange={() => toggleLayer("pente")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.pente}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.cn}
+                                    onChange={() => toggleLayer("cn")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.cn}{" "}
+                                    {/* Ajoutez la traduction ci-dessous */}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Groupe Cartes de Viabilité */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() =>
+                                    setIsPredictionExpanded((prev) => ({
+                                      ...prev,
+                                      viability: !prev.viability,
+                                    }))
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.viabilityMaps}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsPredictionExpanded((prev) => ({
+                                    ...prev,
+                                    viability: !prev.viability,
+                                  }))
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isPredictionExpanded.viability
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isPredictionExpanded.viability && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.class_viabl}
+                                    onChange={() => toggleLayer("class_viabl")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.class_viabl}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.ind_viabl}
+                                    onChange={() => toggleLayer("ind_viabl")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.ind_viabl}
                                   </label>
                                 </div>
                               </div>
