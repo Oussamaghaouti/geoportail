@@ -82,7 +82,7 @@ const App = () => {
     cl_emp: false,
     creation: false,
   });
-  const [currentPage, setCurrentPage] = useState("accueil"); // Can be "accueil", "map", "graph"
+  const [currentPage, setCurrentPage] = useState("accueil");
   const [activeLayers, setActiveLayers] = useState({
     province: false,
     region: false,
@@ -105,11 +105,21 @@ const App = () => {
     prox_route: false,
     prox_eq: false,
     cn: false,
+    b34: false,
+    b33: false,
+    b32: false,
+    b31: false,
+    b30: false,
+    b29: false,
+    b28: false,
+    b27: false,
+    b26: false,
   });
   const [isPredictionExpanded, setIsPredictionExpanded] = useState({
     proximity: false,
     viability: false,
     elevation: false,
+    batiments: false,
   });
   const predictionImageUrl = "/images/viability_classes1.png";
   const predictionImageBounds = L.latLngBounds(
@@ -146,6 +156,7 @@ const App = () => {
     [31.900490241, -4.4668999999999999],
     [31.9501482820000007, -4.3969814789999999]
   );
+  const [showPredictionLegend, setShowPredictionLegend] = useState(false);
 
   const barrageIcon = new L.Icon({
     iconUrl: "https://static.thenounproject.com/png/265-512.png",
@@ -203,6 +214,8 @@ const App = () => {
   const [showNgrokNotice, setShowNgrokNotice] = useState(false);
   const [hasShownNgrokNotice, setHasShownNgrokNotice] = useState(false);
   const [showPa1FloatingLegend, setShowPa1FloatingLegend] = useState(false);
+  const [showViabilityLegend, setShowViabilityLegend] = useState(false);
+  const [showIndexLegend, setShowIndexLegend] = useState(false);
 
   const MapZoomHandler = ({ selectedFeature }) => {
     const map = useMap();
@@ -598,6 +611,22 @@ const App = () => {
     activeLayers.pa1,
     hasShownNgrokNotice,
   ]);
+  useEffect(() => {
+    // Fermer la légende de classification si la couche est désactivée
+    if (!activeLayers.class_viabl && showViabilityLegend) {
+      setShowViabilityLegend(false);
+    }
+
+    // Fermer la légende d'indice si la couche est désactivée
+    if (!activeLayers.ind_viabl && showIndexLegend) {
+      setShowIndexLegend(false);
+    }
+  }, [
+    activeLayers.class_viabl,
+    activeLayers.ind_viabl,
+    showViabilityLegend,
+    showIndexLegend,
+  ]);
   const LAYER_BOUNDS = {
     // commune: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
     // province: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
@@ -635,6 +664,42 @@ const App = () => {
       [31.9501482820000007, -4.3969814789999999]
     ),
     cn: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b26: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b27: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b28: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b29: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b30: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b31: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b32: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b33: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
+    b34: L.latLngBounds(
       [31.900490241, -4.4668999999999999],
       [31.9501482820000007, -4.3969814789999999]
     ),
@@ -677,10 +742,35 @@ const App = () => {
       if (layer === "pa1") {
         setShowPa1FloatingLegend(newState[layer]);
       }
+      if (
+        (layer.startsWith("b2") || layer.startsWith("b3")) &&
+        newState[layer]
+      ) {
+        setShowPredictionLegend(true);
+      }
+      if (layer === "class_viabl" && newState.class_viabl) {
+        setShowViabilityLegend(true);
+      } else if (layer === "ind_viabl" && newState.ind_viabl) {
+        setShowIndexLegend(true);
+      }
 
       return newState;
     });
   };
+  const viabilityLegendImageUrl =
+    "/images/legende_classification_viabilite.png";
+  const indexLegendImageUrl = "/images/legende_indice_viabilite.png";
+  const predictionLegendItems = [
+    { year: "2026", color: "#19e8cf" },
+    { year: "2027", color: "#b6b14a" },
+    { year: "2028", color: "#FF0000" },
+    { year: "2029", color: "#FFA500" },
+    { year: "2030", color: "#FFFF00" },
+    { year: "2031", color: "#008000" },
+    { year: "2032", color: "#0000FF" },
+    { year: "2033", color: "#4B0082" },
+    { year: "2034", color: "#EE82EE" },
+  ];
 
   const layers: {
     color: string;
@@ -1302,6 +1392,141 @@ const App = () => {
                     alt={t.pa1LegendAltText}
                     className="max-w-full h-auto"
                   />
+                </motion.div>
+              )}
+              {showPredictionLegend && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                  className={`
+      absolute top-24 right-4 z-40 p-4 rounded-lg shadow-lg
+      ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
+      max-w-[290px] max-h-[80vh] overflow-y-auto scrollbar-thin
+      ${isDarkMode ? "scrollbar-dark" : "scrollbar-light"}
+    `}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3
+                      className={`font-bold text-lg ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {t.predictionLegendTitle}
+                    </h3>
+                    <button
+                      onClick={() => setShowPredictionLegend(false)}
+                      className={`p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {predictionLegendItems.map((item) => (
+                      <div key={item.year} className="flex items-center">
+                        <div
+                          className="w-5 h-5 mr-2 border border-gray-400"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span>{t[`b${item.year.substring(2)}`]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+              {/* Légende pour la classification de viabilisation */}
+              {showViabilityLegend && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                  className={`
+      absolute top-24 right-4 z-40 p-4 rounded-lg shadow-lg
+      ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
+      max-w-[290px] max-h-[80vh] overflow-y-auto scrollbar-thin
+      ${isDarkMode ? "scrollbar-dark" : "scrollbar-light"}
+    `}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3
+                      className={`font-bold text-lg ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {t.viabilityClassLegendTitle}
+                    </h3>
+                    <button
+                      onClick={() => setShowViabilityLegend(false)}
+                      className={`p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex justify-center">
+                    {" "}
+                    {/* Nouveau conteneur pour centrer */}
+                    <img
+                      src={viabilityLegendImageUrl}
+                      alt={t.viabilityClassLegendAltText}
+                      className="max-w-full h-auto"
+                    />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Légende pour l'indice de viabilisation */}
+              {showIndexLegend && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.3 }}
+                  className={`
+      absolute top-24 right-4 z-40 p-4 rounded-lg shadow-lg
+      ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}
+      max-w-[290px] max-h-[80vh] overflow-y-auto scrollbar-thin
+      ${isDarkMode ? "scrollbar-dark" : "scrollbar-light"}
+    `}
+                >
+                  <div className="flex justify-between items-center mb-3">
+                    <h3
+                      className={`font-bold text-lg ${
+                        isDarkMode ? "text-blue-300" : "text-blue-700"
+                      }`}
+                    >
+                      {t.viabilityIndexLegendTitle}
+                    </h3>
+                    <button
+                      onClick={() => setShowIndexLegend(false)}
+                      className={`p-1 rounded-full ${
+                        isDarkMode
+                          ? "text-gray-300 hover:bg-gray-700"
+                          : "text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex justify-center">
+                    {" "}
+                    {/* Nouveau conteneur pour centrer */}
+                    <img
+                      src={indexLegendImageUrl}
+                      alt={t.viabilityIndexLegendAltText}
+                      className="max-w-full h-auto"
+                    />
+                  </div>
                 </motion.div>
               )}
               <div className="search-control absolute top-24 right-4 z-10">
@@ -3067,6 +3292,179 @@ const App = () => {
                                     }`}
                                   >
                                     {t.ind_viabl}
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {/* Groupe Prédictions Zones Bâties */}
+                          <div className="border rounded-lg p-2 mb-3">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center">
+                                <button
+                                  onClick={() =>
+                                    setIsPredictionExpanded((prev) => ({
+                                      ...prev,
+                                      batiments: !prev.batiments,
+                                    }))
+                                  }
+                                  className={`font-medium ${
+                                    isDarkMode ? "text-white" : "text-black"
+                                  }`}
+                                >
+                                  {t.builtPredictions}
+                                </button>
+                              </div>
+                              <ChevronDownIcon
+                                onClick={() =>
+                                  setIsPredictionExpanded((prev) => ({
+                                    ...prev,
+                                    batiments: !prev.batiments,
+                                  }))
+                                }
+                                className={`w-5 h-5 transform transition-transform ${
+                                  isPredictionExpanded.batiments
+                                    ? "rotate-180"
+                                    : ""
+                                }`}
+                              />
+                            </div>
+
+                            {isPredictionExpanded.batiments && (
+                              <div className="ml-4 mt-2 space-y-2">
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b26}
+                                    onChange={() => toggleLayer("b26")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b26}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b27}
+                                    onChange={() => toggleLayer("b27")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b27}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b28}
+                                    onChange={() => toggleLayer("b28")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b28}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b29}
+                                    onChange={() => toggleLayer("b29")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b29}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b30}
+                                    onChange={() => toggleLayer("b30")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b30}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b31}
+                                    onChange={() => toggleLayer("b31")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b31}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b32}
+                                    onChange={() => toggleLayer("b32")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b32}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b33}
+                                    onChange={() => toggleLayer("b33")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b33}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b34}
+                                    onChange={() => toggleLayer("b34")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b34}
                                   </label>
                                 </div>
                               </div>
