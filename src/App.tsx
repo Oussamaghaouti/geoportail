@@ -104,7 +104,7 @@ const App = () => {
     pente: false,
     prox_route: false,
     prox_eq: false,
-    cn: true,
+    cn: false,
   });
   const [isPredictionExpanded, setIsPredictionExpanded] = useState({
     proximity: false,
