@@ -3061,8 +3061,7 @@ const App = () => {
                               </div>
                             )}
                           </div>
-                          {/* Groupe Cartes de Prédiction */}
-                          <div className="border rounded-lg p-2 mb-3">
+                          {/* <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
                                 <button
@@ -3092,9 +3091,9 @@ const App = () => {
                                     : ""
                                 }`}
                               />
-                            </div>
+                            </div> */}
 
-                            {isPredictionExpanded.proximity && (
+                          {/* {isPredictionExpanded.proximity && (
                               <div className="ml-4 mt-2 space-y-2">
                                 <div className="flex items-center">
                                   <input
@@ -3143,10 +3142,10 @@ const App = () => {
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </div> */}
 
                           {/* Groupe Cartes d'Altitude/Pente */}
-                          <div className="border rounded-lg p-2 mb-3">
+                          {/* <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
                                 <button
@@ -3223,14 +3222,13 @@ const App = () => {
                                     }`}
                                   >
                                     {t.cn}{" "}
-                                    {/* Ajoutez la traduction ci-dessous */}
                                   </label>
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </div> */}
                           {/* Groupe Cartes de Viabilité */}
-                          <div className="border rounded-lg p-2 mb-3">
+                          {/* <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center">
                                 <button
@@ -3296,7 +3294,7 @@ const App = () => {
                                 </div>
                               </div>
                             )}
-                          </div>
+                          </div> */}
                           {/* Groupe Prédictions Zones Bâties */}
                           <div className="border rounded-lg p-2 mb-3">
                             <div className="flex items-center justify-between">
