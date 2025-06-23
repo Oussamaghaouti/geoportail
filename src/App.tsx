@@ -843,11 +843,6 @@ const App = () => {
       layer: "errachidia_P",
       type: "polygone",
     },
-    {
-      color: "#9e9824",
-      layer: "cn",
-      type: "polyline",
-    },
   ];
   const changeLanguage = () => {
     setLanguage((prevLang) => {
