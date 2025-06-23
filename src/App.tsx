@@ -105,6 +105,7 @@ const App = () => {
     prox_route: false,
     prox_eq: false,
     cn: false,
+    b35: false,
     b34: false,
     b33: false,
     b32: false,
@@ -703,6 +704,10 @@ const App = () => {
       [31.900490241, -4.4668999999999999],
       [31.9501482820000007, -4.3969814789999999]
     ),
+    b35: L.latLngBounds(
+      [31.900490241, -4.4668999999999999],
+      [31.9501482820000007, -4.3969814789999999]
+    ),
 
     // routenationale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
     // routeprovinciale: L.latLngBounds([30.0, -7.0], [33.0, -3.0]),
@@ -770,6 +775,7 @@ const App = () => {
     { year: "2032", color: "#0000FF" },
     { year: "2033", color: "#4B0082" },
     { year: "2034", color: "#EE82EE" },
+    { year: "2035", color: "#8c1f52" },
   ];
 
   const layers: {
@@ -3463,6 +3469,21 @@ const App = () => {
                                     }`}
                                   >
                                     {t.b34}
+                                  </label>
+                                </div>
+                                <div className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    checked={activeLayers.b35}
+                                    onChange={() => toggleLayer("b35")}
+                                    className="mr-2"
+                                  />
+                                  <label
+                                    className={`${
+                                      isDarkMode ? "text-white" : "text-black"
+                                    }`}
+                                  >
+                                    {t.b35}
                                   </label>
                                 </div>
                               </div>

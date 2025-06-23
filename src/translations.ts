@@ -458,6 +458,8 @@ pa1LegendAltText: "Légende du plan d'aménagement d'Errachdia",
     b32: "Prédiction zones bâties 2032",
     b33: "Prédiction zones bâties 2033",
     b34: "Prédiction zones bâties 2034",
+    b35: "Prédiction zones bâties 2035",
+
     
     // Couches existantes avec mention "à Errachidia"
     proximityMaps: "Cartes de Proximité à Errachidia",
@@ -935,6 +937,8 @@ pa1LegendTitle: "Development Plan Legend",
     b32: "Built-up areas prediction 2032",
     b33: "Built-up areas prediction 2033",
     b34: "Built-up areas prediction 2034",
+    b35: "Built-up areas prediction 2035",
+
     
     proximityMaps: "Proximity Maps in Errachidia",
     viabilityMaps: "Viability Maps in Errachidia",
@@ -1413,6 +1417,8 @@ pa1LegendTitle: "مفتاح خريطة تصميم التهيئة",
     b32: "توقع المناطق المبنية 2032",
     b33: "توقع المناطق المبنية 2033",
     b34: "توقع المناطق المبنية 2034",
+    b35: "توقع المناطق المبنية 2035",
+
     
     proximityMaps: "خرائط القرب في الرشيدية",
     viabilityMaps: "خرائط الجدوى في الرشيدية",
