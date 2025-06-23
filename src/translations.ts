@@ -1,8 +1,8 @@
 export const translations = {
   fr: {
-    title: "SIG foncier pour le plan régional d'habitat à l'horizon 2034",
+    title: "SIG foncier pour le plan régional d'habitat à l'horizon 2035",
     title2:"Pour la région Drâa-Tafilalet",
-    desc:"Cette plateforme a été réalisée dans le cadre d’une étude régionale d'habitat. Elle vise à concevoir un SIG foncier dédié au Plan Régional d’Habitat à l’horizon 2034 Pour la région Drâa-Tafilalet, permettant une analyse avancée du territoire et une meilleure gestion du foncier pour un aménagement urbain optimisé.",
+    desc:"Cette plateforme a été réalisée dans le cadre d’une étude régionale d'habitat. Elle vise à concevoir un SIG foncier dédié au Plan Régional d’Habitat à l’horizon 2035 Pour la région Drâa-Tafilalet, permettant une analyse avancée du territoire et une meilleure gestion du foncier pour un aménagement urbain optimisé.",
     controlPanel: "Panneau de Contrôle",
     home: "Accueil",
     map: "Carte",
@@ -457,7 +457,7 @@ pa1LegendAltText: "Légende du plan d'aménagement d'Errachdia",
     b31: "Prédiction zones bâties 2031",
     b32: "Prédiction zones bâties 2032",
     b33: "Prédiction zones bâties 2033",
-    b34: "Prédiction zones bâties 2034",
+    b34: "Prédiction zones bâties 2035",
     b35: "Prédiction zones bâties 2035",
 
     
@@ -483,9 +483,9 @@ pa1LegendAltText: "Légende du plan d'aménagement d'Errachdia",
 
   },
   en: {
-    title: "land GIS for the regional housing plan by 2034",
+    title: "land GIS for the regional housing plan by 2035",
     title2: "For the Drâa-Tafilalet region",
-    desc: "This platform was developed as part of a regional housing study. It aims to design a land information system (GIS) dedicated to the Regional Housing Plan for 2034 in the Drâa-Tafilalet region, enabling advanced territorial analysis and improved land management for optimized urban planning.",
+    desc: "This platform was developed as part of a regional housing study. It aims to design a land information system (GIS) dedicated to the Regional Housing Plan for 2035 in the Drâa-Tafilalet region, enabling advanced territorial analysis and improved land management for optimized urban planning.",
     controlPanel: "Control Panel",
     home: "Home",
     map: "Map",
@@ -936,7 +936,7 @@ pa1LegendTitle: "Development Plan Legend",
     b31: "Built-up areas prediction 2031",
     b32: "Built-up areas prediction 2032",
     b33: "Built-up areas prediction 2033",
-    b34: "Built-up areas prediction 2034",
+    b34: "Built-up areas prediction 2035",
     b35: "Built-up areas prediction 2035",
 
     
@@ -961,9 +961,9 @@ pa1LegendTitle: "Development Plan Legend",
 
   },
   ar: {
-    title: "نظام معلومات جغرافية للأراضي لخطة الإسكان الإقليمية  لعام 2034",
+    title: "نظام معلومات جغرافية للأراضي لخطة الإسكان الإقليمية  لعام 2035",
     title2: "لجهة درعة تافيلالت",
-    desc: "تهدف هذه المنصة، التي تم تطويرها في إطار دراسة إقليمية للسكن، إلى تصميم نظام معلومات جغرافية (SIG) عقاري مخصص لـ المخطط الجهوي للإسكان في أفق 2034 بـ جهة درعة تافيلالت، مما يتيح تحليلًا متقدمًا للإقليم وإدارة محسنة للعقار من أجل تخطيط حضري أمثل.",
+    desc: "تهدف هذه المنصة، التي تم تطويرها في إطار دراسة إقليمية للسكن، إلى تصميم نظام معلومات جغرافية (SIG) عقاري مخصص لـ المخطط الجهوي للإسكان في أفق 2035 بـ جهة درعة تافيلالت، مما يتيح تحليلًا متقدمًا للإقليم وإدارة محسنة للعقار من أجل تخطيط حضري أمثل.",
     controlPanel: "لوحة التحكم",
     home: "الرئيسية",
     map: "الخريطة",
@@ -1416,7 +1416,7 @@ pa1LegendTitle: "مفتاح خريطة تصميم التهيئة",
     b31: "توقع المناطق المبنية 2031",
     b32: "توقع المناطق المبنية 2032",
     b33: "توقع المناطق المبنية 2033",
-    b34: "توقع المناطق المبنية 2034",
+    b34: "توقع المناطق المبنية 2035",
     b35: "توقع المناطق المبنية 2035",
 
     
